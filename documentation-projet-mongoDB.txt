@@ -1,0 +1,131 @@
+Rapport d'Avancement : Backend "LocaCar Manager" (Flask/MongoDB)
+Date : 04 Mai 2025 (Adaptez la date)
+Auteur : Votre Nom/Pseudo
+Objectif de ce Rapport : Fournir un aperçu complet de la configuration de l'environnement de développement, de l'architecture du projet backend, des fonctionnalités implémentées, des instructions pour démarrer l'application localement, et des prochaines étapes envisagées pour l'API RESTful de l'application LocaCar Manager.
+1. Contexte du Projet
+Le projet vise à développer une API backend robuste et évolutive pour l'application de gestion de location de voitures "LocaCar Manager". Cette API servira de socle pour une interface frontend (développée en React), en fournissant les endpoints nécessaires pour gérer les voitures, les clients, les managers (utilisateurs internes), les réservations et l'authentification.
+Technologies Choisies :
+Backend Framework : Flask (Python)
+Base de Données : MongoDB
+Driver Base de Données : PyMongo & Flask-PyMongo
+Gestion des Dépendances : Pip & Environnement Virtuel (venv)
+2. Configuration de l'Environnement de Développement (Installation)
+Les étapes suivantes décrivent comment configurer un environnement de développement local identique à celui utilisé pour ce projet.
+Étape 1 : Installer les Prérequis Système
+Python (>= 3.8 recommandé) : Télécharger depuis python.org. Important : Cocher "Add Python to PATH" lors de l'installation (Windows).
+Vérification : python --version
+MongoDB Community Server (>= 6.0 recommandé) : Télécharger depuis mongodb.com/try/download/community. Installer et s'assurer que le service mongod est démarré (souvent automatique via les services Windows, ou manuellement sur Mac/Linux).
+Vérification : Lancer mongosh dans un terminal. S'il se connecte sans erreur (test> prompt), le serveur tourne.
+Étape 2 : Cloner le Projet (si applicable) ou Créer la Structure
+Si le code est sur Git : git clone <URL_DU_REPOSITORY>
+Sinon, créer le dossier principal : mkdir LocaCar Manager
+Naviguer dans le dossier : cd LocaCar Manager
+Étape 3 : Créer et Activer l'Environnement Virtuel
+Créer : python -m venv venv
+Activer (Windows) : .\venv\Scripts\activate
+Activer (Mac/Linux) : source venv/bin/activate
+Vérification : Le prompt du terminal doit commencer par (venv).
+Étape 4 : Installer les Dépendances Python
+(Assurez-vous que (venv) est actif)
+Installer les paquets requis :
+pip install Flask Flask-PyMongo pymongo python-dotenv Flask-Cors Werkzeug
+Use code with caution.
+Bash
+(Optionnel mais recommandé) Mettre à jour pip : python -m pip install --upgrade pip
+(Optionnel mais bonne pratique) Si un fichier requirements.txt existe dans le projet cloné : pip install -r requirements.txt (cela installe toutes les dépendances listées). Si vous venez d'installer manuellement, vous pouvez générer ce fichier : pip freeze > requirements.txt.
+Étape 5 : Configurer les Variables d'Environnement
+Créer un fichier nommé .env à la racine du projet (LocaCar Manager/).
+Y ajouter le contenu suivant (en remplaçant la SECRET_KEY) :
+SECRET_KEY='VOTRE_CLE_SECRETE_LONGUE_ET_ALEATOIRE_ICI!'
+MONGO_URI='mongodb://localhost:27017/locacar_db'
+FLASK_DEBUG=1 # Mettre à 0 en production
+Use code with caution.
+Ini
+(Ce fichier est généralement ignoré par Git via .gitignore).
+Créer un fichier nommé .flaskenv à la racine du projet.
+Y ajouter le contenu :
+FLASK_APP=run.py
+Use code with caution.
+Ini
+Étape 6 : Créer les Utilisateurs Initiaux (Admin/Manager)
+(Méthode 1 : API de Test - Recommandée en Dev)
+Démarrer l'application Flask (voir section 5).
+Utiliser Postman pour envoyer une requête POST à http://127.0.0.1:5000/api/auth/create_test_user avec le corps JSON (adapter si nécessaire) :
+{ "username": "admin", "password": "admin123", "role": "admin", "fullName": "Admin Initial" }
+Use code with caution.
+Json
+Faire de même pour un utilisateur manager :
+{ "username": "manager", "password": "manager123", "role": "manager", "fullName": "Manager Initial" }
+Use code with caution.
+Json
+(Méthode 2 : Manuelle - Si l'API n'est pas dispo ou pour contrôle fin)
+Générer les hashs des mots de passe (admin123, manager123) via l'interpréteur Python dans l'environnement venv (voir section précédente du rapport ou aide mémoire).
+Utiliser mongosh pour se connecter à la base locacar_db (use locacar_db).
+Insérer les documents utilisateurs dans la collection users avec les hashs corrects :
+db.users.insertOne({ username: "admin", password_hash: "HASH_ADMIN", role: "admin", ... });
+db.users.insertOne({ username: "manager", password_hash: "HASH_MANAGER", role: "manager", ... });
+Use code with caution.
+JavaScript
+3. Architecture du Projet Backend
+(Copiez ici la structure de dossier et les explications de la section 3 du rapport précédent)
+LocaCar Manager/
+├── app/
+│   ├── __init__.py           # Factory
+│   ├── extensions.py         # Instances Extensions
+│   ├── routes/               # Blueprints API
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── cars.py
+│   │   ├── clients.py
+│   │   ├── managers.py
+│   │   └── reservations.py
+│   └── utils/                # Helpers
+│       ├── __init__.py
+│       └── helpers.py
+│
+├── venv/                     # Environnement Virtuel
+├── .env                      # Variables d'Env (Secret)
+├── .flaskenv                 # Variables Flask CLI
+├── requirements.txt          # Dépendances
+└── run.py                    # Point d'entrée serveur Dev
+Use code with caution.
+app/__init__.py : Création app, config, init extensions, enregistrement blueprints.
+app/extensions.py : Instances mongo = PyMongo(), cors = CORS().
+app/routes/ : Chaque fichier définit un Blueprint pour une ressource (/api/cars, /api/clients, etc.).
+app/utils/helpers.py : Fonctions utilitaires (conversion BSON, hachage/vérif mdp, @login_required).
+run.py : Lance create_app() et app.run().
+4. Fonctionnalités Implémentées et Testées
+(Copiez ici la liste détaillée des fonctionnalités de la section 4 du rapport précédent)
+Authentification (/api/auth) : Login, Logout, Status, Création User Test (Debug). Sécurité via Session/Cookie.
+Gestion Voitures (/api/cars) : CRUD complet. Sécurisé par rôle (Admin pour CUD, Manager/Admin pour R). Ajout added_by. Route Image prévue.
+Gestion Clients (/api/clients) : CRUD complet. Sécurisé par rôle (Admin pour D, Manager/Admin pour CRU). Vérification unicité email.
+Gestion Managers (/api/managers) : CRUD complet (par Admin seulement). Opère sur la collection users (filtre role: "manager"). Hachage MDP à la création/màj. Exclut hash des réponses. Empêche auto-suppression admin.
+Gestion Réservations (/api/reservations) : CRUD de base (GET liste, GET id, POST, PUT général, PUT status, DELETE). Récupération détails voiture/client. Sécurisé par rôle (Admin pour D, Manager/Admin pour CRU). Logique métier avancée (dispo, màj statut voiture) non implémentée.
+Gestion Erreurs : Handlers basiques 404, 500, 405 pour réponses JSON.
+Sécurité : Hachage MDP (Scrypt/PBKDF2), protection routes via @login_required(role=...).
+5. Comment Démarrer l'Application Localement
+Assurez-vous que le serveur MongoDB tourne.
+Ouvrez un terminal.
+Naviguez jusqu'au dossier racine du projet : cd chemin/vers/LocaCar Manager
+Activez l'environnement virtuel :
+Windows : .\venv\Scripts\activate
+Mac/Linux : source venv/bin/activate
+(Votre prompt doit maintenant commencer par (venv))
+Lancez le serveur de développement Flask :
+flask run
+Use code with caution.
+Bash
+Le serveur devrait démarrer et indiquer qu'il écoute sur http://127.0.0.1:5000.
+L'API est maintenant prête à recevoir des requêtes sur ce port (utilisez Postman ou le frontend React).
+Pour arrêter le serveur, retournez au terminal et appuyez sur Ctrl + C.
+6. Prochaines Étapes Possibles
+(Copiez ici la liste des prochaines étapes de la section 5 du rapport précédent)
+Implémenter Logique Métier Réservations (Disponibilité, Statut Voiture).
+Implémenter Upload Image Voitures.
+Validation Avancée des Données (Marshmallow/Pydantic).
+Amélioration Jointures Réservations ($lookup).
+Tests Automatisés (pytest).
+Logging Structuré.
+Préparation Production (Suppr. /create_test_user, CORS spécifique, WSGI Server).
+7. Conclusion
+Le backend dispose d'une base fonctionnelle solide avec les CRUD essentiels et l'authentification. La structure modulaire facilite l'ajout de nouvelles fonctionnalités. Les prochaines étapes se concentreront sur l'affinage de la logique métier, l'ajout de fonctionnalités clés (upload) et le renforcement de la robustesse (validation, tests).
