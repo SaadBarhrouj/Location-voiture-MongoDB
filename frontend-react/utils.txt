@@ -1,0 +1,14 @@
+npm install react-router-dom
+npm install tailwindcss postcss autoprefixer class-variance-authority clsx tailwind-merge lucide-react
+npm install date-fns zod
+npm install @fortawesome/fontawesome-svg-core @fortawesome/free-solid-svg-icons @fortawesome/react-fontawesome
+npx shadcn add badge
+npx shadcn add button
+npx shadcn add alert-dialog
+npx shadcn add table
+npx shadcn add dialog
+npx shadcn add select
+npx shadcn add textarea
+npm install sonner
+npm install lucide-react
+npx shadcn add alert-dialog

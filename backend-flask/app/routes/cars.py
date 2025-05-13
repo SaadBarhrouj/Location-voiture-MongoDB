@@ -14,7 +14,7 @@ cars_collection = lambda: mongo.db.cars # Raccourci pour la collection
 
 # --- GET / (Liste toutes les voitures) ---
 @cars_bp.route('', methods=['GET'])
-@login_required(role="manager") # Manager ou Admin requis
+# @login_required(role="manager") # Manager ou Admin requis
 def get_cars():
     try:
         cars_cursor = cars_collection().find()
