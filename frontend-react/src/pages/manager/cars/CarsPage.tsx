@@ -1,18 +1,18 @@
-import { CarDetails } from "./CarDetails";
-import { CarForm } from "./CarForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { API_URL } from "@/lib/api-client";
 import {
   type Car,
+  deleteCar,
   getCars,
-  simulateGetCars, // Utiliser la vraie fonction API
-  deleteCar, // Utiliser la vraie fonction API
-} from "@/lib/api/car-service"; // Mettre à jour l'import
+} from "@/lib/api/car-service";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { CarDetails } from "./CarDetails";
+import { CarForm } from "./CarForm";
 
 export default function CarsPage() {
   const [cars, setCars] = useState<Car[]>([]);
@@ -25,11 +25,10 @@ export default function CarsPage() {
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
 
   const fetchCars = async () => {
-    // Renommer pour la clarté
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getCars(); // Utiliser la vraie fonction API
+      const data = await getCars();
       setCars(data);
     } catch (err) {
       console.error("Error fetching cars:", err);
@@ -46,55 +45,79 @@ export default function CarsPage() {
 
   const columns = [
     {
+      header: "Image",
+      accessorKey: "imageUrl" as keyof Car,
+      cell: (car: Car) => {
+        return car.imageUrl ? (
+          <img
+            src={`${API_URL}${car.imageUrl}`}
+            alt={`${car.make} ${car.model}`}
+            className="h-10 w-16 object-cover rounded"
+          />
+        ) : (
+          <div className="h-10 w-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">No Image</div>
+        );
+      },
+    },
+    {
       header: "Make",
-      accessorKey: "make" as keyof Car, // Ajoutez "as keyof Car"
+      accessorKey: "make" as keyof Car,
     },
     {
       header: "Model",
-      accessorKey: "model" as keyof Car, // Ajoutez "as keyof Car"
+      accessorKey: "model" as keyof Car,
     },
     {
       header: "Year",
-      accessorKey: "year" as keyof Car, // Ajoutez "as keyof Car"
+      accessorKey: "year" as keyof Car,
     },
     {
       header: "License Plate",
-      accessorKey: "licensePlate" as keyof Car, // Ajoutez "as keyof Car"
+      accessorKey: "licensePlate" as keyof Car,
     },
     {
-      header: "Status",
-      accessorKey: "status" as keyof Car,
-      cell: (car: Car) => { // Accepter 'car: Car' directement
-        // Vérifier si 'car' et 'car.status' sont valides
-        if (!car || typeof car.status === 'undefined') {
-          console.error("Invalid car data for Status cell:", car);
-          return <span className="text-red-500">Error</span>;
-        }
-        const statusColors: Record<string, string> = {
-          available: "bg-green-100 text-green-800",
-          rented: "bg-blue-100 text-blue-800",
-          maintenance: "bg-yellow-100 text-yellow-800",
+      header: "VIN",
+      accessorKey: "vin" as keyof Car,
+    },
+    {
+      header: "Color",
+      accessorKey: "color" as keyof Car,
+      cell: (car: Car) => {
+        if (!car.color) return <span className="text-gray-500">N/A</span>;
+        
+        const colorMap: Record<string, string> = {
+          black: "bg-black",
+          white: "bg-white border border-gray-300",
+          gray: "bg-gray-500",
+          silver: "bg-gray-300",
+          red: "bg-red-500",
+          blue: "bg-blue-500",
+          green: "bg-green-500",
+          yellow: "bg-yellow-400",
+          orange: "bg-orange-500",
+          brown: "bg-amber-800",
+          beige: "bg-amber-200",
+          gold: "bg-yellow-600",
         };
+
         return (
-          <Badge
-            className={statusColors[car.status] || "bg-gray-100 text-gray-800"}
-            variant="outline"
-          >
-            {car.status.charAt(0).toUpperCase() + car.status.slice(1)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-4 h-4 rounded-full ${colorMap[car.color.toLowerCase()] || "bg-gray-300"}`}
+            />
+            <span className="capitalize">{car.color}</span>
+          </div>
         );
       },
     },
     {
       header: "Daily Rate",
       accessorKey: "dailyRate" as keyof Car,
-      cell: (car: Car) => { // Accepter 'car: Car' directement
-        // Vérifier si 'car' et 'car.dailyRate' sont valides
+      cell: (car: Car) => {
         if (!car || typeof car.dailyRate !== 'number') {
            console.error("Invalid car data for Daily Rate cell:", car);
            return <span className="text-red-500">Error</span>;
         }
-        // Utiliser 'car' directement
         return `${car.dailyRate.toFixed(2)} MAD`;
       },
     },
@@ -120,50 +143,39 @@ export default function CarsPage() {
   const confirmDelete = async () => {
     if (!currentCar) return;
 
-    // Optionnel: Mettre isLoading à true ici si vous voulez un indicateur sur le bouton de confirmation
-    // setIsLoading(true); // Décommenter si nécessaire
-
-    const originalCars = [...cars]; // Sauvegarder l'état actuel pour rollback
-    // Optimistic UI update: Remove car from list immediately
+    const originalCars = [...cars];
     setCars(cars.filter((c) => c.id !== currentCar.id));
-    toast.info("Deleting car..."); // Donner un feedback immédiat
+    toast.info("Deleting car...");
 
     try {
-      await deleteCar(currentCar.id); // Utiliser la vraie fonction API
+      await deleteCar(currentCar.id);
       toast.success("Car deleted successfully.");
-      // Pas besoin de refetch ici si l'update optimiste suffit
-      // fetchCars(); // Ou refetch pour être sûr que la liste est synchronisée
     } catch (err) {
       console.error("Error deleting car:", err);
       toast.error("Failed to delete car.");
-      setCars(originalCars); // Rollback en cas d'erreur
+      setCars(originalCars);
     } finally {
-      // setIsLoading(false); // Décommenter si isLoading a été mis à true
-      setCurrentCar(null); // Réinitialiser la voiture courante
+      setCurrentCar(null);
     }
   };
 
-  // Gère la mise à jour de la liste après ajout/modification via CarForm
   const handleFormSubmit = (updatedOrNewCar: Car) => {
     if (formMode === "add") {
-      setCars([...cars, updatedOrNewCar]); // Ajouter la nouvelle voiture à la liste
+      setCars((prevCars) => [...prevCars, updatedOrNewCar]);
     } else {
-      // Mettre à jour la voiture existante dans la liste
-      setCars(
-        cars.map((c) => (c.id === updatedOrNewCar.id ? updatedOrNewCar : c))
+      setCars((prevCars) =>
+        prevCars.map((c) => (c.id === updatedOrNewCar.id ? updatedOrNewCar : c))
       );
     }
-    setIsFormOpen(false); // Fermer le formulaire
-    // Pas besoin de fetchCars() ici car on met à jour l'état localement
+    setIsFormOpen(false);
   };
 
   const handleDeleteCar = (car: Car) => {
     setCurrentCar(car);
-    setIsDeleteDialogOpen(true); // Ouvrir le dialogue
+    setIsDeleteDialogOpen(true);
   };
 
   if (error && !isLoading) {
-    // Afficher l'erreur seulement si le chargement est terminé
     return <div className="p-4 text-red-600">{error}</div>;
   }
 
@@ -185,16 +197,14 @@ export default function CarsPage() {
         onView={handleViewCar}
       />
 
-      {/* Le formulaire est maintenant contrôlé par son propre état interne + props */}
       <CarForm
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         mode={formMode}
         car={currentCar}
-        onSubmitSuccess={handleFormSubmit} // Passer la fonction de callback
+        onSubmitSuccess={handleFormSubmit}
       />
 
-      {/* Les détails sont affichés via ce composant */}
       <CarDetails
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
@@ -206,7 +216,7 @@ export default function CarsPage() {
         onOpenChange={setIsDeleteDialogOpen}
         title="Delete Car"
         description={`Are you sure you want to delete the car ${currentCar?.make} ${currentCar?.model}? This action cannot be undone.`}
-        onConfirm={confirmDelete} // Appelle la fonction confirmDelete
+        onConfirm={confirmDelete}
         confirmText="Delete"
         cancelText="Cancel"
         variant="destructive"

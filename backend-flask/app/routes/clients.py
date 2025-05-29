@@ -13,7 +13,7 @@ reservations_collection = lambda: mongo.db.reservations # Added for reservation 
 
 # --- GET / (Liste tous les clients) ---
 @clients_bp.route('', methods=['GET'])
-@login_required(role="manager")
+#@login_required(role="manager")
 def get_clients():
     try:
         clients_cursor = clients_collection().find().sort("registeredAt", 1) 
@@ -26,7 +26,7 @@ def get_clients():
 
 # --- GET /<id> (Récupère UN client) ---
 @clients_bp.route('/<string:client_id>', methods=['GET'])
-@login_required(role="manager") 
+#@login_required(role="manager") 
 def get_client_by_id(client_id):
     try:
         oid = ObjectId(client_id)
@@ -49,7 +49,7 @@ def get_client_by_id(client_id):
 
 # --- POST / (Crée un nouveau client) ---
 @clients_bp.route('', methods=['POST'])
-@login_required(role="manager") # Seul Manager peut créer un client
+#@login_required(role="manager") # Seul Manager peut créer un client
 def create_client():
     try:
         data = request.get_json()
@@ -108,7 +108,7 @@ def create_client():
 
 # --- PUT /<id> (Met à jour UN client) ---
 @clients_bp.route('/<string:client_id>', methods=['PUT'])
-@login_required(role="manager") 
+#@login_required(role="manager") 
 def update_client(client_id):
     try:
         oid = ObjectId(client_id)
@@ -181,7 +181,7 @@ def update_client(client_id):
 
 # --- DELETE /<id> (Supprime UN client) ---
 @clients_bp.route('/<string:client_id>', methods=['DELETE'])
-@login_required(role="manager") # Seul Manager peut supprimer un client
+#@login_required(role="manager") # Seul Manager peut supprimer un client
 def delete_client(client_id):
     try:
         oid = ObjectId(client_id)

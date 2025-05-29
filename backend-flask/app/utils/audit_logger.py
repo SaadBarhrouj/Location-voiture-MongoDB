@@ -1,6 +1,7 @@
 from flask import current_app, session
 from datetime import datetime
 from bson import ObjectId
+from ..extensions import mongo
 
 def log_action(action, entity_type, entity_id=None, details=None, status='success', user_id=None, user_username=None):
     """
@@ -18,7 +19,7 @@ def log_action(action, entity_type, entity_id=None, details=None, status='succes
                                        If None, tries to get from session.
     """
     try:
-        mongo = current_app.extensions['mongo']
+        # mongo = current_app.extensions['mongo']
         audit_log_collection = mongo.db.audit_log
 
         log_entry = {

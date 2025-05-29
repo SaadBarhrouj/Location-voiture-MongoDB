@@ -1,133 +1,213 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCar,
-  faUser,
-  faCalendarCheck,
-  faCheckCircle,
-} from "@fortawesome/free-solid-svg-icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Car, Eye, Plus, TrendingUp, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function ManagerDashboard() {
-  return (
-    // Remplacez la div existante par ce contenu
-    <div className="p-6 space-y-6 bg-background text-foreground">
-      <h1 className="text-3xl font-bold tracking-tight text-primary">
-        Manager Dashboard
-      </h1>
-      <p className="text-xs text-muted-foreground">
-        Bienvenue sur le tableau de bord manager. Gérez les voitures, clients et
-        réservations ici.
-      </p>
+  // Mock data - remplacez par vos vraies données
+  const stats = {
+    totalCars: 25,
+    availableCars: 18,
+    rentedCars: 5,
+    maintenanceCars: 2,
+    totalClients: 87,
+    activeReservations: 12,
+    pendingReservations: 3,
+    monthlyRevenue: 45780,
+  };
 
-      {/* Section des cartes statistiques */}
+  const recentClients = [
+    { id: "1", name: "Fatima El Yousfi", email: "fatima@email.com", registeredAt: "2024-01-15" },
+    { id: "2", name: "Karim Alaoui", email: "karim@email.com", registeredAt: "2024-01-10" },
+    { id: "3", name: "Nadia Tazi", email: "nadia@email.com", registeredAt: "2024-01-08" },
+  ];
+
+  const recentReservations = [
+    { id: "1", client: "Omar Benjelloun", car: "Toyota Yaris", startDate: "2024-01-20", status: "confirmed" },
+    { id: "2", client: "Leila Berrada", car: "Renault Clio", startDate: "2024-01-22", status: "pending" },
+    { id: "3", client: "Ahmed Mansouri", car: "Dacia Logan", startDate: "2024-01-25", status: "confirmed" },
+  ];
+
+  return (
+    <div className="p-4 md:p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Manager Dashboard</h1>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link to="/manager/cars">
+              <Car className="mr-2 h-4 w-4" />
+              Manage Cars
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/manager/clients">
+              <Users className="mr-2 h-4 w-4" />
+              Manage Clients
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Voitures</CardTitle>
-            {/* Replace Car icon */}
-            <FontAwesomeIcon icon={faCar} className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Cars</CardTitle>
+            <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">4 actuellement louées</p>
+            <div className="text-2xl font-bold">{stats.totalCars}</div>
+            <div className="text-xs text-muted-foreground">
+              {stats.availableCars} available • {stats.rentedCars} rented
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-            {/* Replace User icon */}
-            <FontAwesomeIcon icon={faUser} className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">8 actifs ce mois-ci</p>
+            <div className="text-2xl font-bold">{stats.totalClients}</div>
+            <div className="text-xs text-muted-foreground">
+              Registered clients
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Réservations en attente
-            </CardTitle>
-            <FontAwesomeIcon icon={faCalendarCheck} className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Reservations</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">En attente d'approbation</p>
+            <div className="text-2xl font-bold">{stats.activeReservations}</div>
+            <div className="text-xs text-muted-foreground">
+              {stats.pendingReservations} pending approval
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Locations Actives</CardTitle>
-            {/* Replace CheckCircle icon */}
-            <FontAwesomeIcon icon={faCheckCircle} className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-xs text-muted-foreground">Voitures actuellement louées</p>
+            <div className="text-2xl font-bold">{stats.monthlyRevenue.toLocaleString()} MAD</div>
+            <div className="text-xs text-muted-foreground">
+              +12% from last month
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Section des réservations récentes */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Recent Clients */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Clients</CardTitle>
+                <CardDescription>Latest client registrations</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/manager/clients">
+                  <Eye className="mr-2 h-4 w-4" />
+                  View All
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentClients.map((client) => (
+                <div key={client.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{client.name}</p>
+                    <p className="text-xs text-muted-foreground">{client.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(client.registeredAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Reservations */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Reservations</CardTitle>
+                <CardDescription>Latest booking requests</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/manager/reservations">
+                  <Eye className="mr-2 h-4 w-4" />
+                  View All
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentReservations.map((reservation) => (
+                <div key={reservation.id} className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{reservation.client}</p>
+                    <p className="text-xs text-muted-foreground">{reservation.car}</p>
+                  </div>
+                  <div className="text-right">
+                    <Badge 
+                      variant="outline" 
+                      className={reservation.status === 'confirmed' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}
+                    >
+                      {reservation.status}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(reservation.startDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Réservations Récentes</CardTitle>
-          <CardDescription className="text-xs">Dernières demandes de réservation</CardDescription>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Manage your car rental business efficiently</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* Exemple de réservation 1 */}
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-xs font-medium">Toyota Yaris</p>
-                <p className="text-xs text-muted-foreground">
-                  Fatima El Yousfi • 10-15 Mai, 2025
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  En attente
-                </span>
-              </div>
-            </div>
-            {/* Exemple de réservation 2 */}
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-xs font-medium">Renault Clio</p>
-                <p className="text-xs text-muted-foreground">
-                  Karim Alaoui • 8-12 Mai, 2025
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  Acceptée
-                </span>
-              </div>
-            </div>
-            {/* Exemple de réservation 3 */}
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-xs font-medium">Dacia Logan</p>
-                <p className="text-xs text-muted-foreground">
-                  Omar Benjelloun • 5-7 Mai, 2025
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                  Refusée
-                </span>
-              </div>
-            </div>
-            {/* Ajoutez d'autres réservations si nécessaire */}
+          <div className="flex flex-wrap gap-4">
+            <Button asChild>
+              <Link to="/manager/cars">
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Car
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/manager/clients">
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Client
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/manager/reservations">
+                <Calendar className="mr-2 h-4 w-4" />
+                New Reservation
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

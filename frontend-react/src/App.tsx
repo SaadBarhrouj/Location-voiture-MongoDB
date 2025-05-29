@@ -4,9 +4,9 @@ import MainLayout from "./components/layout/MainLayout";
 import { useAuth } from "./hooks/useAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LoginPage from "./pages/auth/LoginPage";
-import ManagerDashboard from "./pages/manager/dashboard/ManagerDashboard";
 import CarsPage from "./pages/manager/cars/CarsPage";
-
+import ClientsPage from "./pages/manager/clients/ClientsPage";
+import ManagerDashboard from "./pages/manager/dashboard/ManagerDashboard";
 
 export default function App() {
   const { user, isLoading } = useAuth();
@@ -64,6 +64,7 @@ export default function App() {
               <Routes>
                 <Route path="dashboard" element={<ManagerDashboard />} />
                 <Route path="cars" element={<CarsPage />} />
+                <Route path="clients" element={<ClientsPage />} />
                 {/* Ajoutez d'autres routes manager ici */}
               </Routes>
             </MainLayout>

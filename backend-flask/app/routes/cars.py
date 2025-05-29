@@ -66,7 +66,7 @@ def _save_car_image(file_storage, entity_identifier_for_log: str):
 
 # --- GET / (Liste toutes les voitures) ---
 @cars_bp.route('', methods=['GET'])
-@login_required(role="manager") 
+##@login_required(role="manager") 
 def get_cars():
     try:
         cars_cursor = cars_collection().find()
@@ -79,7 +79,7 @@ def get_cars():
 
 # --- GET /<id> (Récupère UNE voiture) ---
 @cars_bp.route('/<string:car_id>', methods=['GET'])
-@login_required(role="manager")
+##@login_required(role="manager")
 def get_car_by_id(car_id):
     try:
         oid = ObjectId(car_id)
@@ -101,7 +101,7 @@ def get_car_by_id(car_id):
 
 # --- POST / (Crée une nouvelle voiture) ---
 @cars_bp.route('', methods=['POST'])
-@login_required(role="manager")
+##@login_required(role="manager")
 def create_car():
     image_url_for_db = None # Initialize here to ensure it's in scope for cleanup
     try:
@@ -222,7 +222,7 @@ def create_car():
 
 # --- PUT /<id> (Met à jour UNE voiture) ---
 @cars_bp.route('/<string:car_id>', methods=['PUT'])
-@login_required(role="manager")
+##@login_required(role="manager")
 def update_car(car_id):
     try:
         oid = ObjectId(car_id)
@@ -371,7 +371,7 @@ def update_car(car_id):
 
 # --- DELETE /<id> (Supprime UNE voiture) ---
 @cars_bp.route('/<string:car_id>', methods=['DELETE'])
-@login_required(role="manager") 
+##@login_required(role="manager") 
 def delete_car(car_id):
     try:
         oid = ObjectId(car_id)

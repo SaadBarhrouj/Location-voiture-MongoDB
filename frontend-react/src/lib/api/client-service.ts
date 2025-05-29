@@ -4,18 +4,25 @@ export interface Client {
   id: string
   firstName: string
   lastName: string
-  email: string
   phone: string
-  driverLicenseNumber: string
+  CIN: string
+  email?: string
+  driverLicenseNumber?: string
+  notes?: string
   registeredAt: string
+  registeredBy?: string
+  updatedAt?: string
+  updatedBy?: string
 }
 
 export interface ClientCreateInput {
   firstName: string
   lastName: string
-  email: string
   phone: string
-  driverLicenseNumber: string
+  CIN: string
+  email?: string
+  driverLicenseNumber?: string
+  notes?: string
 }
 
 export interface ClientUpdateInput extends Partial<ClientCreateInput> {
@@ -38,8 +45,8 @@ export async function createClient(client: ClientCreateInput): Promise<Client> {
 }
 
 // Update an existing client
-export async function updateClient(client: ClientUpdateInput): Promise<Client> {
-  return apiPut<Client>(`/clients/${client.id}`, client)
+export async function updateClient(id: string, client: Partial<ClientCreateInput>): Promise<Client> {
+  return apiPut<Client>(`/clients/${id}`, client)
 }
 
 // Delete a client
@@ -53,46 +60,52 @@ const initialClients: Client[] = [
     id: "1",
     firstName: "Fatima",
     lastName: "El Yousfi",
+    phone: "+212661234567",
+    CIN: "AB123456",
     email: "fatima.elyousfi@email.com",
-    phone: "+212612345678",
-    driverLicenseNumber: "G789123",
-    registeredAt: "2025-04-28",
+    driverLicenseNumber: "DL789012",
+    notes: "Client fidèle depuis 2020",
+    registeredAt: "2024-01-15T10:30:00Z",
   },
   {
     id: "2",
     firstName: "Karim",
     lastName: "Alaoui",
+    phone: "+212662345678",
+    CIN: "CD234567",
     email: "karim.alaoui@email.com",
-    phone: "+212623456789",
-    driverLicenseNumber: "G456789",
-    registeredAt: "2025-04-25",
+    driverLicenseNumber: "DL890123",
+    registeredAt: "2024-02-20T14:15:00Z",
   },
   {
     id: "3",
     firstName: "Nadia",
     lastName: "Tazi",
+    phone: "+212663456789",
+    CIN: "EF345678",
     email: "nadia.tazi@email.com",
-    phone: "+212634567890",
-    driverLicenseNumber: "G123456",
-    registeredAt: "2025-04-20",
+    notes: "Préfère les voitures automatiques",
+    registeredAt: "2024-03-10T09:45:00Z",
   },
   {
     id: "4",
     firstName: "Omar",
     lastName: "Benjelloun",
-    email: "omar.benjelloun@email.com",
-    phone: "+212645678901",
-    driverLicenseNumber: "G654321",
-    registeredAt: "2025-04-15",
+    phone: "+212664567890",
+    CIN: "GH456789",
+    driverLicenseNumber: "DL901234",
+    registeredAt: "2024-04-05T16:20:00Z",
   },
   {
     id: "5",
     firstName: "Leila",
     lastName: "Berrada",
+    phone: "+212665678901",
+    CIN: "IJ567890",
     email: "leila.berrada@email.com",
-    phone: "+212656789012",
-    driverLicenseNumber: "G987654",
-    registeredAt: "2025-04-10",
+    driverLicenseNumber: "DL012345",
+    notes: "Cliente d'entreprise",
+    registeredAt: "2024-04-28T11:10:00Z",
   },
 ]
 
@@ -116,18 +129,22 @@ export async function simulateCreateClient(client: ClientCreateInput): Promise<C
   const newClient: Client = {
     id: Date.now().toString(),
     ...client,
-    registeredAt: new Date().toISOString().split("T")[0],
+    registeredAt: new Date().toISOString(),
   }
   mockClients.push(newClient)
   return { ...newClient }
 }
 
-export async function simulateUpdateClient(client: ClientUpdateInput): Promise<Client> {
+export async function simulateUpdateClient(id: string, client: Partial<ClientCreateInput>): Promise<Client> {
   await new Promise((resolve) => setTimeout(resolve, 500))
-  const index = mockClients.findIndex((c) => c.id === client.id)
+  const index = mockClients.findIndex((c) => c.id === id)
   if (index === -1) throw new Error("Client not found")
 
-  mockClients[index] = { ...mockClients[index], ...client }
+  mockClients[index] = { 
+    ...mockClients[index], 
+    ...client,
+    updatedAt: new Date().toISOString(),
+  }
   return { ...mockClients[index] }
 }
 
