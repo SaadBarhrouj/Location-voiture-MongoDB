@@ -394,7 +394,7 @@ def delete_car(car_id):
         if active_or_confirmed_reservations:
             reservation_id_str = str(active_or_confirmed_reservations['_id'])
             log_action(
-                action_type='delete_car', 
+                action='delete_car', 
                 entity_type='car', 
                 entity_id=oid, 
                 status='failure', 
@@ -408,7 +408,7 @@ def delete_car(car_id):
 
         if car_to_delete.get('status') == 'rented':
             log_action(
-                action_type='delete_car',
+                action='delete_car',
                 entity_type='car',
                 entity_id=oid,
                 status='warning',

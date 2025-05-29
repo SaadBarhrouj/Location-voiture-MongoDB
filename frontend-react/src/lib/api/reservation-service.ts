@@ -1,243 +1,167 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "../api-client"
+import { apiDelete, apiGet, apiPost, apiPut } from "../api-client";
+
+// --- INTERFACES ---
+export interface CarDetailsForReservation {
+  make: string;
+  model: string;
+  licensePlate: string;
+  imageUrl?: string;
+  vin?: string;
+}
+
+export interface ClientDetailsForReservation {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface UserDetailsForReservation {
+  username?: string;
+  fullName?: string;
+}
+
+export interface PaymentDetails {
+  amountPaid: number;
+  remainingBalance: number;
+  transactionDate?: string | null;
+}
+
+export type ReservationStatus =
+  | "pending_confirmation"
+  | "confirmed"
+  | "active"
+  | "completed"
+  | "cancelled_by_client"
+  | "cancelled_by_agency"
+  | "no_show";
 
 export interface Reservation {
-  id: string
-  carId: string
-  carDetails: {
-    make: string
-    model: string
-    licensePlate: string
-    imageUrl?: string
-  }
-  clientId: string
-  clientDetails: {
-    firstName: string
-    lastName: string
-    email: string
-  }
-  startDate: string
-  endDate: string
-  totalCost: number
-  status: "pending" | "accepted" | "refused" | "active" | "completed" | "cancelled"
-  reservationDate: string
-  decisionDate: string | null
-  notes: string
+  id: string;
+  reservationNumber: string;
+  carId: string;
+  carDetails?: CarDetailsForReservation | null;
+  clientId: string;
+  clientDetails?: ClientDetailsForReservation | null;
+  startDate: string;
+  endDate: string;
+  actualPickupDate?: string | null;
+  actualReturnDate?: string | null;
+  status: ReservationStatus;
+  estimatedTotalCost: number;
+  finalTotalCost?: number | null;
+  notes?: string;
+  reservationDate: string;
+  paymentDetails?: PaymentDetails;
+  createdBy?: string;
+  createdByUser?: UserDetailsForReservation | null;
+  lastModifiedAt: string;
+  lastModifiedBy?: string;
+  lastModifiedByUser?: UserDetailsForReservation | null;
 }
 
 export interface ReservationCreateInput {
-  carId: string
-  clientId: string
-  startDate: string
-  endDate: string
-  totalCost: number
-  status: "pending" | "accepted" | "refused" | "active" | "completed" | "cancelled"
-  notes?: string
+  carId: string;
+  clientId: string;
+  startDate: string;
+  endDate: string;
+  estimatedTotalCost: number;
+  status?: ReservationStatus;
+  notes?: string;
+  paymentDetails?: {
+    amountPaid?: number;
+    transactionDate?: string;
+  };
 }
 
-export interface ReservationUpdateInput extends Partial<ReservationCreateInput> {
-  id: string
+export interface ReservationUpdateInput extends Partial<Omit<ReservationCreateInput, 'status'>> {
+  estimatedTotalCost?: number;
 }
 
-// Get all reservations
+export interface ReservationStatusUpdateInput {
+  status: ReservationStatus;
+  finalTotalCost?: number;
+}
+
+// --- FONCTIONS API ---
 export async function getReservations(): Promise<Reservation[]> {
-  return apiGet<Reservation[]>("/reservations")
+  return apiGet<Reservation[]>("/reservations");
 }
 
-// Get a single reservation by ID
 export async function getReservation(id: string): Promise<Reservation> {
-  return apiGet<Reservation>(`/reservations/${id}`)
+  return apiGet<Reservation>(`/reservations/${id}`);
 }
 
-// Create a new reservation
-export async function createReservation(reservation: ReservationCreateInput): Promise<Reservation> {
-  return apiPost<Reservation>("/reservations", reservation)
+export async function createReservation(reservationData: ReservationCreateInput): Promise<Reservation> {
+  return apiPost<Reservation>("/reservations", reservationData);
 }
 
-// Update an existing reservation
-export async function updateReservation(reservation: ReservationUpdateInput): Promise<Reservation> {
-  return apiPut<Reservation>(`/reservations/${reservation.id}`, reservation)
+export async function updateReservation(id: string, reservationData: ReservationUpdateInput): Promise<Reservation> {
+  return apiPut<Reservation>(`/reservations/${id}`, reservationData);
 }
 
-// Delete a reservation
 export async function deleteReservation(id: string): Promise<void> {
-  return apiDelete<void>(`/reservations/${id}`)
+  return apiDelete<void>(`/reservations/${id}`);
 }
 
-// Update reservation status
-export async function updateReservationStatus(id: string, status: string): Promise<Reservation> {
-  return apiPut<Reservation>(`/reservations/${id}/status`, { status })
+export async function updateReservationStatus(
+  id: string,
+  statusData: ReservationStatusUpdateInput
+): Promise<Reservation> {
+  const response = await apiPut<Reservation>(`/reservations/${id}/status`, statusData);
+  return response;
 }
 
-// For demo purposes, we'll simulate the API calls with mock data
-const initialReservations: Reservation[] = [
+// --- MOCK DATA (pour développement) ---
+const mockReservations: Reservation[] = [
   {
     id: "1",
+    reservationNumber: "RES001",
     carId: "1",
     carDetails: {
       make: "Toyota",
-      model: "Yaris",
-      licensePlate: "WW-123-AB",
-      imageUrl: "/placeholder.svg?height=200&width=300",
+      model: "Corolla",
+      licensePlate: "123456-ا-01",
+      imageUrl: "/static/uploads/cars/toyota-corolla.jpg",
+      vin: "1234567890"
     },
     clientId: "1",
-    clientDetails: { firstName: "Fatima", lastName: "El Yousfi", email: "fatima.elyousfi@email.com" },
-    startDate: "2025-05-10",
-    endDate: "2025-05-15",
-    totalCost: 1250.0,
-    status: "pending",
-    reservationDate: "2025-04-28",
-    decisionDate: null,
-    notes: "Client requested baby seat if possible.",
-  },
-  {
-    id: "2",
-    carId: "2",
-    carDetails: {
-      make: "Renault",
-      model: "Clio",
-      licensePlate: "WW-456-CD",
-      imageUrl: "/placeholder.svg?height=200&width=300",
+    clientDetails: {
+      firstName: "Ahmed",
+      lastName: "Bennani",
+      email: "ahmed@email.com",
+      phone: "+212661234567"
     },
-    clientId: "2",
-    clientDetails: { firstName: "Karim", lastName: "Alaoui", email: "karim.alaoui@email.com" },
-    startDate: "2025-05-08",
-    endDate: "2025-05-12",
-    totalCost: 880.0,
-    status: "accepted",
-    reservationDate: "2025-04-27",
-    decisionDate: "2025-04-28",
-    notes: "",
-  },
-  {
-    id: "3",
-    carId: "3",
-    carDetails: {
-      make: "Dacia",
-      model: "Logan",
-      licensePlate: "WW-789-EF",
-      imageUrl: "/placeholder.svg?height=200&width=300",
+    startDate: "2024-02-01",
+    endDate: "2024-02-05",
+    status: "confirmed",
+    estimatedTotalCost: 1000,
+    notes: "Client préfère récupérer le matin",
+    reservationDate: "2024-01-25T10:30:00Z",
+    paymentDetails: {
+      amountPaid: 300,
+      remainingBalance: 700,
+      transactionDate: "2024-01-25"
     },
-    clientId: "4",
-    clientDetails: { firstName: "Omar", lastName: "Benjelloun", email: "omar.benjelloun@email.com" },
-    startDate: "2025-05-05",
-    endDate: "2025-05-07",
-    totalCost: 540.0,
-    status: "refused",
-    reservationDate: "2025-04-25",
-    decisionDate: "2025-04-26",
-    notes: "Client has previous late returns.",
-  },
-  {
-    id: "4",
-    carId: "5",
-    carDetails: {
-      make: "Hyundai",
-      model: "Tucson",
-      licensePlate: "WW-345-IJ",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    clientId: "3",
-    clientDetails: { firstName: "Nadia", lastName: "Tazi", email: "nadia.tazi@email.com" },
-    startDate: "2025-05-15",
-    endDate: "2025-05-20",
-    totalCost: 1750.0,
-    status: "pending",
-    reservationDate: "2025-04-29",
-    decisionDate: null,
-    notes: "First-time customer.",
-  },
-  {
-    id: "5",
-    carId: "1",
-    carDetails: {
-      make: "Toyota",
-      model: "Yaris",
-      licensePlate: "WW-123-AB",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    clientId: "5",
-    clientDetails: { firstName: "Leila", lastName: "Berrada", email: "leila.berrada@email.com" },
-    startDate: "2025-05-25",
-    endDate: "2025-05-30",
-    totalCost: 1250.0,
-    status: "pending",
-    reservationDate: "2025-04-30",
-    decisionDate: null,
-    notes: "",
-  },
-]
-
-// Mock implementation
-let mockReservations = [...initialReservations]
+    lastModifiedAt: "2024-01-25T10:30:00Z"
+  }
+];
 
 export async function simulateGetReservations(): Promise<Reservation[]> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return [...mockReservations]
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return [...mockReservations];
 }
 
-export async function simulateGetReservation(id: string): Promise<Reservation> {
-  await new Promise((resolve) => setTimeout(resolve, 300))
-  const reservation = mockReservations.find((r) => r.id === id)
-  if (!reservation) throw new Error("Reservation not found")
-  return { ...reservation }
-}
-
-export async function simulateCreateReservation(reservation: ReservationCreateInput): Promise<Reservation> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  // In a real implementation, we would fetch car and client details from the server
-  // For demo purposes, we'll use mock data
-  const carDetails = {
-    make: "New Car",
-    model: "Model",
-    licensePlate: "WW-NEW-XX",
-    imageUrl: "/placeholder.svg?height=200&width=300",
-  }
-
-  const clientDetails = {
-    firstName: "New",
-    lastName: "Client",
-    email: "new.client@email.com",
-  }
-
+export async function simulateCreateReservation(reservationData: ReservationCreateInput): Promise<Reservation> {
+  await new Promise((resolve) => setTimeout(resolve, 500));
   const newReservation: Reservation = {
     id: Date.now().toString(),
-    ...reservation,
-    carDetails,
-    clientDetails,
-    reservationDate: new Date().toISOString().split("T")[0],
-    decisionDate: null,
-    notes: reservation.notes ? reservation.notes : "",
-  }
-
-  mockReservations.push(newReservation)
-  return { ...newReservation }
-}
-
-export async function simulateUpdateReservation(reservation: ReservationUpdateInput): Promise<Reservation> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  const index = mockReservations.findIndex((r) => r.id === reservation.id)
-  if (index === -1) throw new Error("Reservation not found")
-
-  mockReservations[index] = { ...mockReservations[index], ...reservation }
-  return { ...mockReservations[index] }
-}
-
-export async function simulateDeleteReservation(id: string): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  mockReservations = mockReservations.filter((r) => r.id !== id)
-}
-
-export async function simulateUpdateReservationStatus(id: string, status: string): Promise<Reservation> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  const index = mockReservations.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error("Reservation not found")
-
-  mockReservations[index] = {
-    ...mockReservations[index],
-    status: status as any,
-    decisionDate: new Date().toISOString().split("T")[0],
-  }
-
-  return { ...mockReservations[index] }
+    reservationNumber: `RES${String(Date.now()).slice(-6)}`,
+    ...reservationData,
+    reservationDate: new Date().toISOString(),
+    lastModifiedAt: new Date().toISOString(),
+    status: reservationData.status || "pending_confirmation"
+  };
+  mockReservations.push(newReservation);
+  return { ...newReservation };
 }
