@@ -195,11 +195,11 @@ export function CarForm({
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="make">Make</Label>
-            <Input id="make" value={formData.make} onChange={handleChange} required />
+            <Input id="make" value={formData.make} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="e.g. Toyota" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="model">Model</Label>
-            <Input id="model" value={formData.model} onChange={handleChange} required />
+            <Input id="model" value={formData.model} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="e.g. Corolla" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="year">Year</Label>
@@ -209,6 +209,8 @@ export function CarForm({
               value={formData.year}
               onChange={handleChange}
               required
+              className="placeholder:text-muted-foreground/60"
+              placeholder={new Date().getFullYear().toString()}
             />
           </div>
           <div className="space-y-2">
@@ -218,11 +220,13 @@ export function CarForm({
               value={formData.licensePlate}
               onChange={handleChange}
               required
+              className="placeholder:text-muted-foreground/60"
+              placeholder="e.g. 123456-ا-01"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="vin">VIN (Vehicle Identification Number)</Label>
-            <Input id="vin" value={formData.vin} onChange={handleChange} required />
+            <Input id="vin" value={formData.vin} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="17-character VIN" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="color">Color</Label>
@@ -283,6 +287,8 @@ export function CarForm({
               onChange={handleChange}
               required
               step="0.01"
+              className="placeholder:text-muted-foreground/60"
+              placeholder="e.g. 250.00"
             />
           </div>
           <div className="space-y-2">
@@ -291,29 +297,67 @@ export function CarForm({
               id="description"
               value={formData.description}
               onChange={handleChange}
+              className="placeholder:text-muted-foreground/60"
+              placeholder="Additional details about the car..."
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="imageFile">Car Image</Label>
-            <Input
-              id="imageFile"
-              type="file"
-              accept="image/png, image/jpeg, image/gif"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-            />
-            {previewImageUrl && (
-              <div className="mt-2">
-                <img 
-                  src={previewImageUrl.startsWith('blob:') ? previewImageUrl : `${API_URL}${previewImageUrl}`} 
-                  alt="Preview" 
-                  className="h-32 w-auto object-cover rounded" 
-                />
-                <Button type="button" variant="link" size="sm" onClick={handleRemoveImage} className="text-red-500">
-                  Remove Image
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Choose Image
                 </Button>
+                <span className="text-sm text-muted-foreground">
+                  {formData.imageFile ? (
+                    <span className="text-green-600 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Image selected
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {previewImageUrl ? "Current image will be kept" : "No image selected"}
+                    </span>
+                  )}
+                </span>
               </div>
-            )}
+              <Input
+                id="imageFile"
+                type="file"
+                accept="image/png, image/jpeg, image/gif, image/webp"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="hidden"
+              />
+              {previewImageUrl && (
+                <div className="space-y-2">
+                  <img 
+                    src={previewImageUrl.startsWith('blob:') ? previewImageUrl : `${API_URL}${previewImageUrl}`} 
+                    alt="Preview" 
+                    className="h-32 w-auto object-cover rounded border" 
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleRemoveImage} 
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-3"
+                  >
+                    Remove Image
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

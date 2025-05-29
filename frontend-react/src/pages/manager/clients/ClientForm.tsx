@@ -166,6 +166,7 @@ export function ClientForm({
                 onChange={handleChange}
                 required
                 placeholder="Enter first name"
+                className="placeholder:text-muted-foreground/60"
               />
             </div>
             <div className="space-y-2">
@@ -178,6 +179,7 @@ export function ClientForm({
                 onChange={handleChange}
                 required
                 placeholder="Enter last name"
+                className="placeholder:text-muted-foreground/60"
               />
             </div>
           </div>
@@ -191,6 +193,7 @@ export function ClientForm({
               onChange={handleChange}
               required
               placeholder="+212 6XX XXX XXX"
+              className="placeholder:text-muted-foreground/60"
             />
           </div>
           <div className="space-y-2">
@@ -203,6 +206,7 @@ export function ClientForm({
               onChange={handleChange}
               required
               placeholder="AB123456"
+              className="placeholder:text-muted-foreground/60"
             />
           </div>
           <div className="space-y-2">
@@ -213,6 +217,7 @@ export function ClientForm({
               value={formData.email}
               onChange={handleChange}
               placeholder="client@example.com"
+              className="placeholder:text-muted-foreground/60"
             />
           </div>
           <div className="space-y-2">
@@ -222,6 +227,7 @@ export function ClientForm({
               value={formData.driverLicenseNumber}
               onChange={handleChange}
               placeholder="DL123456"
+              className="placeholder:text-muted-foreground/60"
             />
           </div>
           <div className="space-y-2">
@@ -232,6 +238,7 @@ export function ClientForm({
               onChange={handleChange}
               placeholder="Any additional notes about the client..."
               rows={3}
+              className="placeholder:text-muted-foreground/60"
             />
           </div>
           <DialogFooter>

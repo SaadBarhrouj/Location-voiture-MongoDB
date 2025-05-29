@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
@@ -105,7 +104,7 @@ export default function CarsPage() {
             <div
               className={`w-4 h-4 rounded-full ${colorMap[car.color.toLowerCase()] || "bg-gray-300"}`}
             />
-            <span className="capitalize">{car.color}</span>
+            <span>{car.color}</span>
           </div>
         );
       },
