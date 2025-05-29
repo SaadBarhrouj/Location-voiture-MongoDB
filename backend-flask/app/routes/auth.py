@@ -1,8 +1,7 @@
-# app/routes/auth.py
 from flask import Blueprint, request, jsonify, session, current_app
 from ..extensions import mongo
-# Importer les helpers nécessaires
 from ..utils.helpers import check_password, hash_password, mongo_to_dict, bson_to_json
+from ..utils.audit_logger import log_action 
 from datetime import datetime
 
 # Création du Blueprint pour l'authentification
@@ -24,31 +23,45 @@ def login():
 
     # Vérifier si l'utilisateur existe et si le mot de passe correspond au hash stocké
     if user_doc and check_password(user_doc.get('password_hash'), password):
+        # Vérifier si le compte est actif
+        if not user_doc.get('isActive', True):
+            log_action(action="LOGIN_FAILURE", entity_type="USER", entity_id=str(user_doc['_id']), user_id=str(user_doc['_id']), user_username=username, details={"reason": "Account deactivated"})
+            return jsonify(message="Account is deactivated. Please contact administrator."), 403 
+
         # Si oui, créer la session utilisateur
-        session.permanent = True # Rendre la session persistante (selon config Flask)
+        session.permanent = True 
         session['user_id'] = str(user_doc['_id'])
         session['username'] = user_doc['username']
         session['user_role'] = user_doc.get('role')
         session['user_fullName'] = user_doc.get('fullName')
+        session['isActive'] = user_doc.get('isActive', True)
 
-        # Préparer la réponse avec les infos utilisateur (sans le hash)
+        log_action(action="LOGIN_SUCCESS", entity_type="USER", entity_id=str(user_doc['_id']), user_id=str(user_doc['_id']), user_username=username)
+
+        # Préparer la réponse avec les infos utilisateur 
         user_response = {
             "id": str(user_doc['_id']),
             "username": user_doc['username'],
             "role": user_doc.get('role'),
-            "fullName": user_doc.get('fullName')
+            "fullName": user_doc.get('fullName'),
+            "isActive": user_doc.get('isActive', True) 
         }
         # Renvoyer les infos et le statut 200 OK
         return jsonify({"user": user_response}), 200
     else:
         # Si utilisateur non trouvé ou mot de passe incorrect
+        log_action(action="LOGIN_FAILURE", entity_type="USER", user_username=username, details={"reason": "Invalid credentials"})
         return jsonify(message="Invalid username or password"), 401
 
 # --- POST /logout (Déconnecter un utilisateur) ---
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
+    user_id = session.get('user_id')
+    username = session.get('username')
     # Effacer toutes les données de la session actuelle
     session.clear()
+    if user_id:
+        log_action(action="LOGOUT", entity_type="USER", entity_id=user_id, user_id=user_id, user_username=username)
     # Renvoyer un message de succès
     return jsonify(message="Logged out successfully"), 200
 
@@ -62,7 +75,8 @@ def status():
             "id": session['user_id'],
             "username": session['username'],
             "role": session.get('user_role'),
-            "fullName": session.get('user_fullName')
+            "fullName": session.get('user_fullName'),
+            "isActive": session.get('isActive')
         }
         return jsonify({"user": user_response}), 200
     else:
@@ -102,7 +116,9 @@ def create_test_user():
         "password_hash": hashed_pw,
         "role": role,
         "fullName": fullName,
-        "createdAt": datetime.utcnow()
+        "isActive": True, 
+        "createdAt": datetime.utcnow(),
+        "updatedAt": None  
     }
 
     # Insérer dans la base de données
@@ -113,9 +129,12 @@ def create_test_user():
             created_user_doc = mongo.db.users.find_one(
                 {'_id': result.inserted_id}, {'password_hash': 0}
             )
+            log_action(action="CREATE_TEST_USER", entity_type="USER", entity_id=str(result.inserted_id), user_id=str(result.inserted_id), user_username=username, details=new_user)
             return bson_to_json(mongo_to_dict(created_user_doc)), 201 # 201 Created
         else:
+             log_action(action="CREATE_TEST_USER_FAILURE", entity_type="USER", user_username=username, details={"reason": "Insert failed", "user_data": new_user})
              return jsonify(message="Failed to insert test user."), 500
     except Exception as e:
         current_app.logger.error(f"Error inserting test user {username}: {e}")
+        log_action(action="CREATE_TEST_USER_FAILURE", entity_type="USER", user_username=username, details={"reason": str(e), "user_data": new_user})
         return jsonify(message="Error inserting test user into database."), 500

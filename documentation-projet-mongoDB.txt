@@ -129,3 +129,97 @@ Logging Structuré.
 Préparation Production (Suppr. /create_test_user, CORS spécifique, WSGI Server).
 7. Conclusion
 Le backend dispose d'une base fonctionnelle solide avec les CRUD essentiels et l'authentification. La structure modulaire facilite l'ajout de nouvelles fonctionnalités. Les prochaines étapes se concentreront sur l'affinage de la logique métier, l'ajout de fonctionnalités clés (upload) et le renforcement de la robustesse (validation, tests).
+
+
+
+
+
+
+
+
+users (Pour Admins et Managers)
+
+_id: ObjectId
+username: String (unique, pour la connexion)
+password_hash: String (mot de passe haché)
+role: String ("admin", "manager")
+fullName: String (nom complet de l'employé)
+isActive: Boolean (default: true, pour désactiver un compte sans le supprimer)
+createdAt: DateTime (date de création du compte)
+updatedAt: DateTime (dernière modification)\
+
+
+
+
+_id: ObjectId
+firstName: String
+lastName: String
+phone: String (principal identifiant pour la recherche par téléphone, devrait être unique)
+email: String (optionnel, unique si fourni)
+driverLicenseNumber: String (numéro de permis, optionnelle apres creation e reservation)
+CIN: String 
+notes: String (notes spécifiques du manager sur ce client)
+registeredAt: DateTime (date d'enregistrement du client)
+registeredBy: ObjectId (référence à users._id du manager qui a créé le client)
+updatedAt: DateTime
+updatedBy: ObjectId (référence à users._id)
+
+
+
+_id: ObjectId
+make: String (marque)
+model: String (modèle)
+year: Integer
+licensePlate: String (plaque d'immatriculation, doit être unique)
+vin: String (Numéro d'Identification du Véhicule, doit être unique, très important pour l'identification)
+color: String (optionnel)
+status: String (ex: "available", "rented", "maintenance", "out_of_service")
+dailyRate: Float (tarif de location journalier)
+imageUrl: String (URL de l'image de la voiture)
+description: String (notes sur la voiture)
+addedAt: DateTime (date d'ajout au parc)
+addedBy: ObjectId (référence à users._id)
+updatedAt: DateTime
+updatedBy: ObjectId (référence à users._id)
+
+
+
+
+reservations
+
+_id: ObjectId
+reservationNumber: String (numéro de réservation unique, peut être généré)
+carId: ObjectId (référence à cars._id)
+clientId: ObjectId (référence à clients._id)
+startDate: DateTime (date et heure de début prévues)
+endDate: DateTime (date et heure de fin prévues)
+actualPickupDate: DateTime (date et heure réelles de prise du véhicule)
+actualReturnDate: DateTime (date et heure réelles de retour)
+status: String (ex: "pending_confirmation", "confirmed", "active", "completed", "cancelled_by_client", "cancelled_by_agency", "no_show")
+estimatedTotalCost: Float (calculé lors de la réservation)
+finalTotalCost: Float (calculé après retour)
+notes: String (notes spécifiques à cette réservation)
+reservationDate: DateTime (date à laquelle la réservation a été faite)
+createdBy: ObjectId (référence à users._id du manager qui a pris la réservation)
+lastModifiedAt: DateTime
+lastModifiedBy: ObjectId (référence à users._id)
+paymentDetails: Object (optionnel)
+amountPaid: Float
+reste
+transactionDate: DateTime
+
+
+
+
+audit_log (Nouvelle collection pour l'historique détaillé)
+
+_id: ObjectId
+timestamp: DateTime (quand l'action a eu lieu)
+userId: ObjectId (référence à users._id de l'utilisateur ayant fait l'action)
+userUsername: String (username, pour lecture facile)
+action: String (ex: "CREATE_CAR", "UPDATE_RESERVATION_STATUS", "LOGIN_ATTEMPT_FAILURE", "DELETE_CLIENT")
+entityType: String (ex: "Car", "Reservation", "Client", "User")
+entityId: ObjectId (ID de l'entité affectée, si applicable)
+details: Object (données contextuelles, ex: changements effectués, adresse IP source)
+before: Object (état avant, pour les mises à jour)
+after: Object (état après, pour les mises à jour/créations)
