@@ -145,7 +145,7 @@ export function ClientForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === "add" ? "Add New Client" : "Edit Client"}</DialogTitle>
           <DialogDescription>

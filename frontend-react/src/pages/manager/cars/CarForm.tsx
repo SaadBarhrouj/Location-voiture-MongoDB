@@ -183,7 +183,7 @@ export function CarForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === "add" ? "Add New Car" : "Edit Car"}</DialogTitle>
           <DialogDescription>
@@ -193,93 +193,113 @@ export function CarForm({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="make">Make</Label>
-            <Input id="make" value={formData.make} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="e.g. Toyota" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="make">
+                Make <span className="text-red-500">*</span>
+              </Label>
+              <Input id="make" value={formData.make} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="e.g. Toyota" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="model">
+                Model <span className="text-red-500">*</span>
+              </Label>
+              <Input id="model" value={formData.model} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="e.g. Corolla" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="year">
+                Year <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="year"
+                type="number"
+                value={formData.year}
+                onChange={handleChange}
+                required
+                className="placeholder:text-muted-foreground/60"
+                placeholder={new Date().getFullYear().toString()}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="licensePlate">
+                License Plate <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="licensePlate"
+                value={formData.licensePlate}
+                onChange={handleChange}
+                required
+                className="placeholder:text-muted-foreground/60"
+                placeholder="e.g. 123456-ا-01"
+              />
+            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
-            <Input id="model" value={formData.model} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="e.g. Corolla" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="year">Year</Label>
-            <Input
-              id="year"
-              type="number"
-              value={formData.year}
-              onChange={handleChange}
-              required
-              className="placeholder:text-muted-foreground/60"
-              placeholder={new Date().getFullYear().toString()}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="licensePlate">License Plate</Label>
-            <Input
-              id="licensePlate"
-              value={formData.licensePlate}
-              onChange={handleChange}
-              required
-              className="placeholder:text-muted-foreground/60"
-              placeholder="e.g. 123456-ا-01"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vin">VIN (Vehicle Identification Number)</Label>
+            <Label htmlFor="vin">
+              VIN (Vehicle Identification Number) <span className="text-red-500">*</span>
+            </Label>
             <Input id="vin" value={formData.vin} onChange={handleChange} required className="placeholder:text-muted-foreground/60" placeholder="17-character VIN" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="color">Color</Label>
-            <Select
-              value={formData.color}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, color: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select color">
-                  {formData.color && (
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-4 h-4 rounded-full ${carColors.find(c => c.value === formData.color)?.colorClass || "bg-gray-300"}`}
-                      />
-                      {carColors.find(c => c.value === formData.color)?.label || formData.color}
-                    </div>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {carColors.map((color) => (
-                  <SelectItem key={color.value} value={color.value}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded-full ${color.colorClass}`} />
-                      {color.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="color">Color</Label>
+              <Select
+                value={formData.color}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, color: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select color">
+                    {formData.color && (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-4 h-4 rounded-full ${carColors.find(c => c.value === formData.color)?.colorClass || "bg-gray-300"}`}
+                        />
+                        {carColors.find(c => c.value === formData.color)?.label || formData.color}
+                      </div>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {carColors.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded-full ${color.colorClass}`} />
+                        {color.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">
+                Status <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, status: value as Car["status"] }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="rented">Rented</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, status: value as Car["status"] }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="rented">Rented</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dailyRate">Daily Rate (MAD)</Label>
+            <Label htmlFor="dailyRate">
+              Daily Rate (MAD) <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="dailyRate"
               type="number"
@@ -287,6 +307,7 @@ export function CarForm({
               onChange={handleChange}
               required
               step="0.01"
+              min="0"
               className="placeholder:text-muted-foreground/60"
               placeholder="e.g. 250.00"
             />

@@ -49,7 +49,7 @@ export function ClientDetails({ open, onOpenChange, client }: ClientDetailsProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Client Details</DialogTitle>
           <DialogDescription>

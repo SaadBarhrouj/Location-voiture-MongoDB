@@ -66,7 +66,7 @@ export function CarDetails({ open, onOpenChange, car }: CarDetailsProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Car Details</DialogTitle>
           <DialogDescription>
