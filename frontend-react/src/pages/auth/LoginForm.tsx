@@ -47,7 +47,7 @@ export function LoginForm() {
   return (
     <Card className="w-full bg-card text-card-foreground">
       <CardHeader>
-        <CardTitle className="text-base">Login</CardTitle>
+        <CardTitle className="text-lg text-center">Login</CardTitle>
         <CardDescription>
           Entrez vos identifiants pour accéder à votre compte
         </CardDescription>
