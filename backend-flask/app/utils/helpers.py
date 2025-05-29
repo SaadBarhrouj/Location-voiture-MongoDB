@@ -32,7 +32,7 @@ def hash_password(password):
 
 def check_password(hashed_password, password):
     """Vérifie si un mot de passe correspond à son hash."""
-    if not hashed_password: # Gérer le cas où le hash est vide en BDD
+    if not hashed_password: 
         return False
     return check_password_hash(hashed_password, password)
 
