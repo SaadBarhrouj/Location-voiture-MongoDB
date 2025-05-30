@@ -9,6 +9,8 @@ import CarsPage from "./pages/manager/cars/CarsPage";
 import ClientsPage from "./pages/manager/clients/ClientsPage";
 import ManagerDashboard from "./pages/manager/dashboard/ManagerDashboard";
 import ReservationsPage from "./pages/manager/reservations/ReservationsPage";
+import ManagersPage from "./pages/admin/managers/ManagersPage";
+import AuditLogsPage from "./pages/admin/audit-logs/AuditLogsPage";
 
 export default function App() {
   const { user, isLoading } = useAuth();
@@ -16,34 +18,52 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading) {
-      const publicPaths = ["/login"];
-      const isPublicPath = publicPaths.includes(location.pathname);
-
-      if (user) {
-        // Détermine l'URL cible selon le rôle
-        const target = user.role === "admin" ? "/admin/dashboard" : "/manager/dashboard";
-
-        // Si l'utilisateur se trouve sur une page publique ou à la racine, et que l'URL actuelle n'est pas déjà celle cible
-        if ((isPublicPath || location.pathname === "/") && location.pathname !== target) {
-          navigate(target, { replace: true });
-        }
-      } else {
-        if (!isPublicPath && location.pathname !== "/login") {
-          navigate("/login", { replace: true });
-        }
-      }
+    if (isLoading) {
+      return; // Wait until authentication status is resolved
     }
-  }, [user, isLoading, navigate, location.pathname]);
+
+    const isLoginPage = location.pathname === "/login";
+
+    if (user) {
+      // User is "logged in"
+      const targetDashboard = user.role === "admin" ? "/admin/dashboard" : "/manager/dashboard";
+
+      if (isLoginPage) {
+        // If logged in and on the login page, redirect to their dashboard
+        navigate(targetDashboard, { replace: true });
+      } else if (location.pathname === "/") {
+        // If logged in and on the root path, redirect to their dashboard
+        navigate(targetDashboard, { replace: true });
+      }
+      // If logged in and on any other page (e.g., already on their dashboard or another allowed page), do nothing.
+    } else {
+      // User is NOT "logged in"
+      if (!isLoginPage) {
+        // If not logged in and not on the login page, redirect to the login page
+        navigate("/login", { replace: true });
+      }
+      // If not logged in and on the login page, do nothing (stay on the login page).
+    }
+  }, [user, isLoading, navigate, location]); // Use location object for full dependency
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    // You can replace this with a more sophisticated loading spinner
+    return <div className="flex justify-center items-center h-screen">Loading application...</div>;
   }
 
   return (
     <>
+      <Toaster 
+        position="top-right" // Or your preferred position
+        expand={false}
+        richColors
+        closeButton
+      />
       <Routes>
-        <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" replace />} />
+        <Route 
+          path="/login" 
+          element={!user ? <LoginPage /> : <Navigate to="/" replace />} 
+        />
         <Route
           path="/admin/*"
           element={
@@ -51,7 +71,9 @@ export default function App() {
               <MainLayout>
                 <Routes>
                   <Route path="dashboard" element={<AdminDashboard />} />
-                  {/* Ajoutez d'autres routes admin ici */}
+                  <Route path="managers" element={<ManagersPage />} />
+                  <Route path="audit-logs" element={<AuditLogsPage />} />
+                  {/* Add other admin routes here */}
                 </Routes>
               </MainLayout>
             ) : (
@@ -69,7 +91,7 @@ export default function App() {
                   <Route path="cars" element={<CarsPage />} />
                   <Route path="clients" element={<ClientsPage />} />
                   <Route path="reservations" element={<ReservationsPage />} />
-                  {/* Ajoutez d'autres routes manager ici */}
+                  {/* Add other manager routes here */}
                 </Routes>
               </MainLayout>
             ) : (
@@ -79,17 +101,16 @@ export default function App() {
         />
         <Route
           path="/"
-          element={<Navigate to={user ? (user.role === "admin" ? "/admin/dashboard" : "/manager/dashboard") : "/login"} replace />}
+          element={
+            // This will be caught by the useEffect:
+            // if user -> navigate to dashboard
+            // if !user -> navigate to /login
+            <Navigate to="/login" replace /> 
+          }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch-all for undefined routes, redirect to login or a 404 page */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-      <Toaster 
-        position="top-right"
-        expand={false}
-        richColors
-        closeButton
-        duration={4000}
-      />
     </>
   );
 }

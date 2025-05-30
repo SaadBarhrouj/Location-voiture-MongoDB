@@ -1,14 +1,16 @@
 # app/__init__.py
 import os
-from flask import Flask, jsonify, current_app 
+from flask import Flask, jsonify, current_app, request # Added request for error handlers
 from dotenv import load_dotenv
+from datetime import timedelta # Added for session lifetime
 
 # Charger les variables d'environnement (.env) au démarrage
 load_dotenv()
 
 # Importer les instances d'extensions partagées (créées dans extensions.py)
-from .extensions import mongo, cors
+from .extensions import mongo, cors, bcrypt # Assuming bcrypt is in extensions
 from .utils.audit_logger import log_action # Import for potential app-level logging if needed
+# from .config import Config # Assuming you might have a Config object, or use os.environ directly
 
 # --- Application Factory ---
 # Motif de conception pour créer l'application Flask de manière organisée
@@ -19,124 +21,118 @@ def create_app():
     app = Flask(__name__)
 
     # --- Configuration ---
-    # Charger la configuration depuis les variables d'environnement
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') # Essentiel pour les sessions
+    # Charger la configuration depuis les variables d'environnement ou un objet Config
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key') # Essentiel pour les sessions
     app.config['MONGO_URI'] = os.environ.get('MONGO_URI')  # Pour la connexion à MongoDB
     
     # Configuration pour l'upload des images de voitures
-    # Le dossier 'uploads/cars' sera créé à l'intérieur du dossier 'static' de l'application.
-    # Assurez-vous que le dossier 'static' existe à la racine de votre 'app'.
-    # Si 'app.static_folder' est par exemple 'c:\Users\...\backend-flask\app\static',
-    # alors UPLOAD_FOLDER_CARS sera 'c:\Users\...\backend-flask\app\static\uploads\cars'
     app.config['UPLOAD_FOLDER_CARS'] = os.path.join(app.static_folder, 'uploads', 'cars')
-    app.config['ALLOWED_IMAGE_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-    
-    # Optionnel: Définir la durée de vie des sessions 'permanentes'
-    # from datetime import timedelta
-    # app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8) # Exemple: 8 heures
+    app.config['ALLOWED_IMAGE_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB limit for uploads
+
+    # Configuration de la session
+    app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+    app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=int(os.environ.get('SESSION_LIFETIME_DAYS', 7)))
+
 
     # --- Initialisation des Extensions ---
-    # Lier les instances d'extensions à cette application spécifique
-    mongo.init_app(app) # Initialise Flask-PyMongo
-    # Active CORS pour les routes API, y compris les identifiants pour les sessions
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True) 
+    mongo.init_app(app) 
+    bcrypt.init_app(app) # Initialize bcrypt
+    cors.init_app(app, resources={r"/api/*": {"origins": os.environ.get('CORS_ORIGINS', '*')}}, supports_credentials=True) 
 
-    # Créer le dossier d'upload s'il n'existe pas déjà au démarrage de l'app
+    # Créer le dossier d'upload s'il n'existe pas déjà
     if not os.path.exists(app.config['UPLOAD_FOLDER_CARS']):
         try:
             os.makedirs(app.config['UPLOAD_FOLDER_CARS'])
             app.logger.info(f"Successfully created upload folder: {app.config['UPLOAD_FOLDER_CARS']}")
         except OSError as e:
             app.logger.error(f"Error creating upload folder {app.config['UPLOAD_FOLDER_CARS']}: {e}")
-            # Envisager de logguer cette erreur critique via audit_logger si nécessaire
-            # try:
-            #     log_action(action='upload_folder_creation_failed', entity_type='system', status='critical', details={'error': str(e), 'path': app.config['UPLOAD_FOLDER_CARS']})
-            # except Exception as log_e:
-            #     app.logger.error(f"Failed to log upload_folder_creation_failed to audit log: {log_e}")
-            # Selon la criticité, vous pourriez vouloir empêcher l'application de démarrer ou la laisser continuer avec des fonctionnalités d'upload désactivées.
+            try:
+                log_action(action='upload_folder_creation_failed', entity_type='system', status='critical', details={'error': str(e), 'path': app.config['UPLOAD_FOLDER_CARS']})
+            except Exception as log_e:
+                app.logger.error(f"Failed to log upload_folder_creation_failed to audit log: {log_e}")
+
 
     # --- Enregistrement des Blueprints (Modules de Routes) ---
-    # Importer et lier chaque module de routes à l'application avec un préfixe d'URL
-
-    # Routes pour les Voitures -> /api/cars/*
-    from .routes.cars import cars_bp
-    app.register_blueprint(cars_bp, url_prefix='/api/cars')
-
-    # Routes pour l'Authentification -> /api/auth/*
     from .routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
-    # Routes pour les Clients -> /api/clients/*
+    from .routes.cars import cars_bp
+    app.register_blueprint(cars_bp, url_prefix='/api/cars')
+
     from .routes.clients import clients_bp
     app.register_blueprint(clients_bp, url_prefix='/api/clients')
 
-    # Routes pour les Managers -> /api/managers/*
     from .routes.managers import managers_bp
     app.register_blueprint(managers_bp, url_prefix='/api/managers')
 
-    # Routes pour les Réservations -> /api/reservations/*
     from .routes.reservations import reservations_bp
     app.register_blueprint(reservations_bp, url_prefix='/api/reservations')
 
-    # Ensure audit_log_routes_bp is registered (it was already present)
     from .routes.audit_log_routes import audit_log_bp
-    # The url_prefix='/api/audit-logs' is defined within audit_log_routes.py, so no need to set it here again.
-    app.register_blueprint(audit_log_bp) 
+    app.register_blueprint(audit_log_bp) # Prefix is defined in the blueprint file
+
+    from .routes.admin_routes import admin_bp # <<< MODIFICATION: Import admin_bp
+    app.register_blueprint(admin_bp) # <<< MODIFICATION: Register admin_bp (prefix is defined in admin_routes.py)
+
 
     # --- Routes de Test (Utiles pour le développement) ---
-
-    # Endpoint pour vérifier si l'API est en ligne
     @app.route('/api/ping')
     def ping():
         """Route simple pour vérifier si le serveur répond."""
         return jsonify({"message": "pong! LocaCar Manager API is alive!"})
 
-    # Endpoint pour vérifier la connexion à la base de données MongoDB
     @app.route('/api/db_ping')
     def db_ping():
         """Tente une commande simple sur MongoDB pour vérifier la connexion."""
         try:
-            mongo.db.command('ping') # Commande MongoDB 'ping'
+            mongo.db.command('ping') 
             return jsonify({"message": "MongoDB connection successful!"})
         except Exception as e:
-            app.logger.error(f"Database connection error: {e}") # Log l'erreur
-            # Log this critical failure using audit_logger as a system event
+            app.logger.error(f"Database connection error: {e}") 
             try:
                 log_action(action='db_ping_failed', entity_type='system', status='failure', details={'error': str(e)})
             except Exception as log_e:
                 app.logger.error(f"Failed to log db_ping_failed to audit log: {log_e}")
-            return jsonify({"message": f"MongoDB connection failed: {e}"}), 500 # Erreur serveur
+            return jsonify({"message": f"MongoDB connection failed: {e}"}), 500
 
 
     # --- Gestionnaires d'Erreurs Globaux ---
-    # Attrapent les erreurs HTTP spécifiques pour renvoyer une réponse JSON standardisée
-
-    @app.errorhandler(404) # Erreur: Ressource non trouvée
+    @app.errorhandler(404) 
     def not_found_error(error):
         """Gère les erreurs 404 (URL non trouvée)."""
-        # Log 404 errors if desired, could be noisy
         # log_action(action='http_error_404', entity_type='system', status='info', details={'path': request.path, 'error': str(error)})
         return jsonify(message="The requested URL was not found on the server."), 404
 
-    @app.errorhandler(500) # Erreur: Erreur interne du serveur
+    @app.errorhandler(500) 
     def internal_error(error):
         """Gère les erreurs serveur génériques (non prévues)."""
-        # Important: Logguer l'erreur complète pour le débogage côté serveur
         app.logger.error(f"Internal Server Error: {error}", exc_info=True)
-        # Log internal server errors
         try:
-            log_action(action='http_error_500', entity_type='system', status='failure', details={'error': str(error)})
+            log_action(action='http_error_500', entity_type='system', status='failure', details={'path': request.path, 'error': str(error)})
         except Exception as log_e:
             app.logger.error(f"Failed to log http_error_500 to audit log: {log_e}")
-        # Renvoyer un message générique au client
         return jsonify(message="An internal server error occurred."), 500
 
-    @app.errorhandler(405) # Erreur: Méthode non autorisée (ex: GET sur une route POST)
+    @app.errorhandler(405) 
     def method_not_allowed(error):
         """Gère les erreurs 405 (Méthode HTTP non supportée pour cette URL)."""
-        # Log 405 errors if desired
         # log_action(action='http_error_405', entity_type='system', status='info', details={'path': request.path, 'method': request.method, 'error': str(error)})
         return jsonify(message="The method is not allowed for the requested URL."), 405
+    
+    @app.errorhandler(400)
+    def bad_request_error(error):
+        """Handles 400 Bad Request errors."""
+        # The error object might contain a description attribute from Flask/Werkzeug
+        message = error.description if hasattr(error, 'description') else "The browser (or proxy) sent a request that this server could not understand."
+        app.logger.warning(f"Bad Request: {message} - Path: {request.path} - Error: {str(error)}")
+        try:
+            log_action(action='http_error_400', entity_type='system', status='warning', details={'path': request.path, 'error': str(error), 'message': message})
+        except Exception as log_e:
+            app.logger.error(f"Failed to log http_error_400 to audit log: {log_e}")
+        return jsonify(message=message), 400
 
     # --- Retourner l'Application Configurée ---
     return app
