@@ -42,7 +42,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const closeSidebar = () => setSidebarOpen(false);
 
   const effectiveRole = user ? user.role : (location.pathname.startsWith('/admin') ? 'admin' : 'manager');
-  const panelTitle = effectiveRole === "admin" ? "Admin Panel (Dev)" : "Manager Panel";
+  const panelTitle = effectiveRole === "admin" ? "Admin Panel" : "Manager Panel";
+  const displayTitle = user ? `${panelTitle} (${user.username})` : panelTitle;
   const currentNavItems = user ? navItems[user.role] : (effectiveRole === 'admin' ? navItems.admin : navItems.manager);
 
   return (
@@ -54,7 +55,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         } md:translate-x-0`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <h2 className="text-xl font-bold">{panelTitle}</h2>
+          <h2 className="text-xl font-bold">{displayTitle}</h2>
           <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
             {sidebarOpen ? <FontAwesomeIcon icon={faTimes} /> : <FontAwesomeIcon icon={faBars} />} {/* Use faBars or similar for menu */}
           </Button>
