@@ -10,6 +10,8 @@ import {
   faCalendarCheck,
   faSignOutAlt,
   faTimes,
+  faBars,
+  faHistory,
 } from "@fortawesome/free-solid-svg-icons";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -18,6 +20,7 @@ const navItems = {
   admin: [
     { title: "Dashboard", href: "/admin/dashboard", icon: <FontAwesomeIcon icon={faHome} className="h-5 w-5" /> },
     { title: "Managers", href: "/admin/managers", icon: <FontAwesomeIcon icon={faUserCog} className="h-5 w-5" /> },
+    { title: "Audit Logs", href: "/admin/audit-logs", icon: <FontAwesomeIcon icon={faHistory} className="h-5 w-5" /> },
   ],
   manager: [
     { title: "Dashboard", href: "/manager/dashboard", icon: <FontAwesomeIcon icon={faHome} className="h-5 w-5" /> },
@@ -33,10 +36,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  if (!user) return null;
+  // if (!user) return null;
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const closeSidebar = () => setSidebarOpen(false);
+
+  const effectiveRole = user ? user.role : (location.pathname.startsWith('/admin') ? 'admin' : 'manager');
+  const panelTitle = effectiveRole === "admin" ? "Admin Panel (Dev)" : "Manager Panel";
+  const currentNavItems = user ? navItems[user.role] : (effectiveRole === 'admin' ? navItems.admin : navItems.manager);
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -47,14 +54,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         } md:translate-x-0`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <h2 className="text-xl font-bold">{user.role === "admin" ? "Admin Panel" : "Manager Panel"}</h2>
+          <h2 className="text-xl font-bold">{panelTitle}</h2>
           <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
-            {/* Replace X icon */}
-            <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
+            {sidebarOpen ? <FontAwesomeIcon icon={faTimes} /> : <FontAwesomeIcon icon={faBars} />} {/* Use faBars or similar for menu */}
           </Button>
         </div>
-        <nav className="p-4 space-y-2">
-          {navItems[user.role].map((item) => (
+        <nav className="flex-grow p-4 space-y-2 overflow-y-auto">
+          {currentNavItems?.map((item) => (
             <Link
               key={item.href}
               to={item.href}

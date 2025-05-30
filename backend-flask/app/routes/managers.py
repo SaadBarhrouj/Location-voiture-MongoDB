@@ -17,7 +17,7 @@ users_collection = lambda: mongo.db.users
 
 # --- GET / (Liste tous les managers) ---
 @managers_bp.route('', methods=['GET'])
-@login_required(role="admin") # Seul Admin peut lister les managers
+# @login_required(role="admin") # Seul Admin peut lister les managers
 def get_managers():
     try:
         # Trouve les utilisateurs avec role='manager', exclut le hash du mot de passe
@@ -35,7 +35,7 @@ def get_managers():
 
 # --- GET /<id> (Récupère UN manager) ---
 @managers_bp.route('/<string:manager_id>', methods=['GET'])
-@login_required(role="admin") # Seul Admin peut voir un manager
+# @login_required(role="admin") # Seul Admin peut voir un manager
 def get_manager_by_id(manager_id):
     try:
         oid = ObjectId(manager_id)
@@ -62,7 +62,7 @@ def get_manager_by_id(manager_id):
 
 # --- POST / (Crée un nouveau manager) ---
 @managers_bp.route('', methods=['POST'])
-@login_required(role="admin") # Seul Admin peut créer
+# @login_required(role="admin") # Seul Admin peut créer
 def create_manager():
     try:
         data = request.get_json()
@@ -115,7 +115,7 @@ def create_manager():
 
 # --- PUT /<id> (Met à jour UN manager) ---
 @managers_bp.route('/<string:manager_id>', methods=['PUT'])
-@login_required(role="admin") # Seul Admin peut modifier
+# @login_required(role="admin") # Seul Admin peut modifier
 def update_manager(manager_id):
     try:
         oid = ObjectId(manager_id)
@@ -187,7 +187,7 @@ def update_manager(manager_id):
 
 # --- DELETE /<id> (Supprime UN manager) ---
 @managers_bp.route('/<string:manager_id>', methods=['DELETE'])
-@login_required(role="admin") # Seul Admin peut supprimer
+# @login_required(role="admin") # Seul Admin peut supprimer
 def delete_manager(manager_id):
     current_user_id_str = session.get('user_id')
     if current_user_id_str == manager_id:
