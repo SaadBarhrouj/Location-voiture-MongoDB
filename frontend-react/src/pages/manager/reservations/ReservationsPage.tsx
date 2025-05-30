@@ -365,7 +365,7 @@ export default function ReservationsPage() {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-96" align="end"> {/* Increased width for more filters */}
+            <PopoverContent className="w-[420px]" align="end">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Filter Reservations</h4>
@@ -381,7 +381,7 @@ export default function ReservationsPage() {
                       value={reservationNumberFilter}
                       onChange={(e) => setReservationNumberFilter(e.target.value)}
                       placeholder="Filter by number..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -391,7 +391,7 @@ export default function ReservationsPage() {
                       value={carFilter}
                       onChange={(e) => setCarFilter(e.target.value)}
                       placeholder="Make, model, plate..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -401,7 +401,7 @@ export default function ReservationsPage() {
                       value={clientFilter}
                       onChange={(e) => setClientFilter(e.target.value)}
                       placeholder="Name..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                    <div className="grid grid-cols-3 items-center gap-4">
@@ -423,24 +423,6 @@ export default function ReservationsPage() {
                       onChange={(e) => setEndDateFilter(e.target.value)}
                       className="col-span-2 h-8 text-xs"
                     />
-                  </div>
-                  <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor="statusFilter" className="text-xs">Status</Label>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(value) => setStatusFilter(value as ReservationStatus | "all")}
-                    >
-                      <SelectTrigger className="col-span-2 h-8 text-xs">
-                        <SelectValue placeholder="Filter by status..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {reservationStatusesList.map(status => (
-                          <SelectItem key={status} value={status} className="text-xs">
-                            {status === "all" ? "All Statuses" : formatStatus(status as ReservationStatus)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2 pt-2">

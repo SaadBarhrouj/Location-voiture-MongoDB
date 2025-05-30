@@ -204,7 +204,7 @@ export default function ClientsPage() {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
+            <PopoverContent className="w-96" align="end">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Filter Clients</h4>
@@ -220,7 +220,7 @@ export default function ClientsPage() {
                       value={firstNameFilter}
                       onChange={(e) => setFirstNameFilter(e.target.value)}
                       placeholder="Filter by first name..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -230,7 +230,7 @@ export default function ClientsPage() {
                       value={lastNameFilter}
                       onChange={(e) => setLastNameFilter(e.target.value)}
                       placeholder="Filter by last name..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -240,7 +240,7 @@ export default function ClientsPage() {
                       value={phoneFilter}
                       onChange={(e) => setPhoneFilter(e.target.value)}
                       placeholder="Filter by phone..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -250,7 +250,7 @@ export default function ClientsPage() {
                       value={cinFilter}
                       onChange={(e) => setCinFilter(e.target.value)}
                       placeholder="Filter by CIN..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -260,7 +260,7 @@ export default function ClientsPage() {
                       value={emailFilter}
                       onChange={(e) => setEmailFilter(e.target.value)}
                       placeholder="Filter by email..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                 </div>

@@ -15,7 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Added Select for status filter
+} from "@/components/ui/select";
 import { API_URL } from "@/lib/api-client";
 import {
   type Car,
@@ -328,6 +328,24 @@ export default function CarsPage() {
                       placeholder="Filter by VIN..."
                       className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="statusFilter" className="text-xs">Status</Label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(value) => setStatusFilter(value as Car["status"] | "all")}
+                    >
+                      <SelectTrigger className="col-span-2 h-8 text-xs">
+                        <SelectValue placeholder="Filter by status..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {carStatuses.map(status => (
+                          <SelectItem key={status} value={status} className="text-xs">
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
                     <Label htmlFor="colorFilter" className="text-xs">Color</Label>
