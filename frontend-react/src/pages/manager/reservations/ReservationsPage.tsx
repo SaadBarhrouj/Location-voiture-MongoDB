@@ -281,57 +281,61 @@ export default function ReservationsPage() {
     {
       header: "N° Res.",
       accessorKey: "reservationNumber" as keyof Reservation,
-      cell: ({ row }: { row: { original: Reservation }}) => (
-        <span className="font-mono text-xs">{row.original.reservationNumber}</span>
+      cell: (item: Reservation) => (
+        <span className="font-mono text-xs">{item.reservationNumber}</span>
       )
     },
     {
       header: "Car",
-      accessorKey: "carDetails" as keyof Reservation,
-      cell: ({ row }: { row: { original: Reservation }}) => {
-        const car = row.original.carDetails;
+      accessorKey: "carDetails" as keyof Reservation, // carDetails might not be a direct keyof Reservation if it's optional or complex. Consider 'carId' or a display key.
+                                                    // If carDetails is an object within Reservation, this accessorKey might be problematic for sorting/filtering if DataTable relies on it.
+                                                    // For display purposes with a cell renderer, it's often fine.
+      cell: (item: Reservation) => { // MODIFIED HERE
+        const car = item.carDetails;
         return car ? `${car.make} ${car.model} (${car.licensePlate})` : "N/A";
       },
     },
     {
       header: "Client",
-      accessorKey: "clientDetails" as keyof Reservation,
-      cell: ({ row }: { row: { original: Reservation }}) => {
-        const client = row.original.clientDetails;
+      accessorKey: "clientDetails" as keyof Reservation, // Similar to carDetails, ensure this is a valid key or handle appropriately.
+      cell: (item: Reservation) => { // MODIFIED HERE
+        const client = item.clientDetails;
         return client ? `${client.firstName} ${client.lastName}` : "N/A";
       },
     },
     {
       header: "Dates",
-      cell: ({ row }: { row: { original: Reservation }}) => (
+      accessorKey: "startDate" as keyof Reservation, // ADDED/MODIFIED: Provide a valid key. 'startDate' or 'id' can work.
+      cell: (item: Reservation) => ( // MODIFIED HERE
         <div className="text-sm">
-          <div>Start: {formatDate(row.original.startDate)}</div>
-          <div>End: {formatDate(row.original.endDate)}</div>
+          <div>Start: {formatDate(item.startDate)}</div>
+          <div>End: {formatDate(item.endDate)}</div>
         </div>
       ),
     },
     {
       header: "Est. Cost",
       accessorKey: "estimatedTotalCost" as keyof Reservation,
-      cell: ({ row }: { row: { original: Reservation }}) => `${row.original.estimatedTotalCost.toFixed(2)} MAD`,
+      cell: (item: Reservation) => `${item.estimatedTotalCost.toFixed(2)} MAD`, // MODIFIED HERE
     },
     {
       header: "Status",
       accessorKey: "status" as keyof Reservation,
-      cell: ({ row }: { row: { original: Reservation }}) => (
-        <Badge variant="outline" className={`${getStatusColor(row.original.status)} whitespace-nowrap`}>
-          {formatStatus(row.original.status)}
+      cell: (item: Reservation) => ( // MODIFIED HERE
+        <Badge variant="outline" className={`${getStatusColor(item.status)} whitespace-nowrap`}>
+          {formatStatus(item.status)}
         </Badge>
       ),
     },
     {
       header: "Reserved On",
       accessorKey: "reservationDate" as keyof Reservation,
-      cell: ({ row }: { row: { original: Reservation }}) => formatDate(row.original.reservationDate),
+      cell: (item: Reservation) => formatDate(item.reservationDate), // MODIFIED HERE
     },
     {
       header: "Actions",
-      cell: ({ row }: { row: { original: Reservation }}) => getRowActions(row.original),
+      accessorKey: "id" as keyof Reservation, // ADDED: Provide a unique key, 'id' is a good choice.
+      cell: (item: Reservation) => getRowActions(item), // MODIFIED HERE
     }
   ];
   
@@ -458,7 +462,6 @@ export default function ReservationsPage() {
       <DataTable
         data={filteredReservations} // Use filtered data
         columns={columns}
-        isLoading={isLoading}
         // No searchKey needed here as we are handling filtering outside
       />
 
