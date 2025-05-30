@@ -14,7 +14,7 @@ import { AlertCircle } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { simulateLogin, login } from "../../lib/api/auth-service";
+import { simulateLogin } from "../../lib/api/auth-service";
 
 export function LoginForm() {
   const [username, setUsername] = useState("");
@@ -38,22 +38,22 @@ export function LoginForm() {
         navigate("/manager/dashboard", { replace: true });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur de connexion");
+      setError(err instanceof Error ? err.message : "Login error");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full bg-card text-card-foreground">
-      <CardHeader>
-        <CardTitle className="text-lg text-center">Login</CardTitle>
-        <CardDescription>
-          Entrez vos identifiants pour accéder à votre compte
+    <Card className="w-full bg-card text-card-foreground shadow-lg">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
+        <CardDescription className="text-center">
+          Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="p-6 pt-0 space-y-4">
+        <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -61,7 +61,9 @@ export function LoginForm() {
             </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="username">Nom d'utilisateur</Label>
+            <Label htmlFor="username" className="text-sm font-medium">
+              Username
+            </Label>
             <Input
               id="username"
               type="text"
@@ -70,12 +72,15 @@ export function LoginForm() {
                 setUsername(e.target.value)
               }
               required
-              placeholder="Votre nom d'utilisateur"
+              placeholder="Enter your username"
               disabled={isLoading}
+              className="placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password" className="text-sm font-medium">
+              Password
+            </Label>
             <Input
               id="password"
               type="password"
@@ -84,14 +89,19 @@ export function LoginForm() {
                 setPassword(e.target.value)
               }
               required
-              placeholder="Votre mot de passe"
+              placeholder="Enter your password"
               disabled={isLoading}
+              className="placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Connexion..." : "Se connecter"}
+        <CardFooter className="pt-4">
+          <Button 
+            type="submit" 
+            className="w-full h-10 font-medium" 
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </CardFooter>
       </form>
