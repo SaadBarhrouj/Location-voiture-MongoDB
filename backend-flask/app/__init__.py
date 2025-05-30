@@ -74,8 +74,11 @@ def create_app():
     from .routes.audit_log_routes import audit_log_bp
     app.register_blueprint(audit_log_bp) # Prefix is defined in the blueprint file
 
-    from .routes.admin_routes import admin_bp # <<< MODIFICATION: Import admin_bp
-    app.register_blueprint(admin_bp) # <<< MODIFICATION: Register admin_bp (prefix is defined in admin_routes.py)
+    from .routes.admin_routes import admin_bp 
+    app.register_blueprint(admin_bp) # Prefix is defined in admin_routes.py
+    
+    from .routes.manager_dashboard_routes import manager_dashboard_bp # Import manager dashboard blueprint
+    app.register_blueprint(manager_dashboard_bp) # Register manager dashboard blueprint (prefix is defined in its file)
 
 
     # --- Routes de Test (Utiles pour le développement) ---

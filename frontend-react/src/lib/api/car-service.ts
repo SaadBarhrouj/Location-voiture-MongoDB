@@ -6,16 +6,16 @@ export interface Car {
   model: string
   year: number
   licensePlate: string
-  vin: string // Ajouté
-  color?: string // Ajouté
-  status: "available" | "rented" | "maintenance"
+  vin: string
+  color?: string
+  status: "available" | "rented" | "maintenance" | "out_of_service"
   dailyRate: number
   description?: string
   imageUrl?: string
-  addedAt?: string // Standardisé
-  addedBy?: string // ID de l'utilisateur qui a ajouté
-  updatedAt?: string // Ajouté
-  updatedBy?: string // ID de l'utilisateur qui a mis à jour
+  addedAt?: string
+  addedBy?: string
+  updatedAt?: string
+  updatedBy?: string
 }
 
 export interface CarCreateInput {
@@ -23,18 +23,18 @@ export interface CarCreateInput {
   model: string
   year: number
   licensePlate: string
-  vin: string // Ajouté
-  color?: string // Ajouté
-  status: "available" | "rented" | "maintenance"
+  vin: string
+  color?: string
+  status: "available" | "rented" | "maintenance" | "out_of_service"
   dailyRate: number
   description?: string
-  imageFile?: File | null // Pour l'upload d'image
+  imageFile?: File | null
 }
 
 export interface CarUpdateInput extends Partial<Omit<CarCreateInput, 'imageFile'>> {
   id: string
   imageFile?: File | null
-  imageUrl?: string | null // Pour supprimer l'image existante
+  imageUrl?: string | null
 }
 
 // Get all cars

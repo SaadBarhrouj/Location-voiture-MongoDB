@@ -65,7 +65,7 @@ def _get_reservation_details(res_doc):
     res_dict = mongo_to_dict(res_doc)
     
     # Détails de la voiture
-    car_doc = cars_collection().find_one({'_id': res_doc.get('carId')}, {'make': 1, 'model': 1, 'licensePlate': 1, 'imageUrl': 1, 'vin': 1})
+    car_doc = cars_collection().find_one({'_id': res_doc.get('carId')}, {'make': 1, 'model': 1, 'licensePlate': 1, 'imageUrl': 1, 'vin': 1, 'status': 1})
     res_dict['carDetails'] = mongo_to_dict(car_doc) if car_doc else None
     
     # Détails du client
@@ -343,7 +343,6 @@ def update_reservation_status(reservation_id):
             'lastModifiedAt': datetime.utcnow(),
             'lastModifiedBy': modified_by_oid
         }
-        # car_update_fields = {} # Not used directly here, car updates are separate calls
 
         action_details = {'old_status': reservation.get('status'), 'new_status': new_status, 'carId': str(reservation.get('carId'))}
 
@@ -356,17 +355,36 @@ def update_reservation_status(reservation_id):
             cars_collection().update_one({'_id': reservation.get('carId')}, {'$set': {'status': 'available', 'updatedAt': datetime.utcnow(), 'updatedBy': modified_by_oid}})
             log_action('update_car_status', 'car', entity_id=reservation.get('carId'), status='success', details={'new_status': 'available', 'reason': f'Reservation {reservation.get("reservationNumber")} completed'})
             
+            # Gérer le coût final
             if 'finalTotalCost' in data: 
                 update_data['finalTotalCost'] = float(data['finalTotalCost'])
-                payment_details = reservation.get('paymentDetails', {})
-                amount_paid = payment_details.get('amountPaid', 0.0)
-                update_data['paymentDetails.remainingBalance'] = update_data['finalTotalCost'] - amount_paid
-                action_details['finalTotalCost'] = update_data['finalTotalCost']
             else: 
                 update_data['finalTotalCost'] = reservation.get('estimatedTotalCost')
-                payment_details = reservation.get('paymentDetails', {})
-                amount_paid = payment_details.get('amountPaid', 0.0)
+            
+            # Mettre à jour les détails de paiement avec les nouvelles informations
+            current_payment_details = reservation.get('paymentDetails', {})
+            
+            # Les nouveaux détails de paiement peuvent être envoyés dans les données
+            if 'paymentDetails' in data:
+                payment_update = data['paymentDetails']
+                new_amount_paid = float(payment_update.get('amountPaid', current_payment_details.get('amountPaid', 0.0)))
+                new_transaction_date = payment_update.get('transactionDate', current_payment_details.get('transactionDate'))
+                
+                update_data['paymentDetails'] = {
+                    'amountPaid': new_amount_paid,
+                    'remainingBalance': update_data['finalTotalCost'] - new_amount_paid,
+                    'transactionDate': new_transaction_date
+                }
+            else:
+                # Utiliser les détails existants mais recalculer le solde
+                amount_paid = current_payment_details.get('amountPaid', 0.0)
                 update_data['paymentDetails.remainingBalance'] = update_data['finalTotalCost'] - amount_paid
+            
+            # Ajouter les notes de completion si fournies
+            if 'completionNotes' in data:
+                update_data['notes'] = data['completionNotes']
+            
+            action_details['finalTotalCost'] = update_data['finalTotalCost']
 
         elif new_status in ["cancelled_by_client", "cancelled_by_agency", "no_show"]:
             car_doc = cars_collection().find_one({'_id': reservation.get('carId')})

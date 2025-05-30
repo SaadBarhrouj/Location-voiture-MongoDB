@@ -53,12 +53,12 @@ export default function App() {
 
   return (
     <>
-      <Toaster 
+      {/* <Toaster 
         position="top-right" // Or your preferred position
         expand={false}
         richColors
         closeButton
-      />
+      /> */}
       <Routes>
         <Route 
           path="/login" 
