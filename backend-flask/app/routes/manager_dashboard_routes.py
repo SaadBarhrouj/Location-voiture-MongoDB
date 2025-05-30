@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, current_app, request
 from bson import ObjectId
 from app.extensions import mongo
-from ..utils.helpers import login_required # Changed from app.utils.auth_utils import token_required
-from ..utils.audit_logger import log_action # Assuming this is the correct path for log_action
+from ..utils.helpers import login_required 
+from ..utils.audit_logger import log_action 
 from datetime import datetime, timedelta
 
 manager_dashboard_bp = Blueprint('manager_dashboard_bp', __name__, url_prefix='/api/manager/dashboard')
@@ -75,7 +75,7 @@ def get_manager_dashboard_stats():
 
 
 @manager_dashboard_bp.route('/recent-clients', methods=['GET'])
-@login_required(role="manager") # Changed from @token_required
+@login_required(role="manager")
 def get_recent_clients():
     try:
         limit = int(request.args.get('limit', 3))
