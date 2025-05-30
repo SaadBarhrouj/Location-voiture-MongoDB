@@ -7,7 +7,7 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 users_collection = lambda: mongo.db.users
 
 @admin_bp.route('/stats', methods=['GET'])
- #@login_required(role="admin")
+@login_required(role="admin")
 def get_admin_stats():
     try:
         total_managers = users_collection().count_documents({'role': 'manager'})

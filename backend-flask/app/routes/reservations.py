@@ -86,7 +86,7 @@ def _get_reservation_details(res_doc):
 
 # --- GET / (Liste toutes les réservations) ---
 @reservations_bp.route('', methods=['GET'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def get_reservations():
     try:
         reservations_list = []
@@ -103,7 +103,7 @@ def get_reservations():
 
 # --- GET /<id> (Récupère UNE réservation) ---
 @reservations_bp.route('/<string:reservation_id>', methods=['GET'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def get_reservation_by_id(reservation_id):
     try:
         oid = ObjectId(reservation_id)
@@ -123,7 +123,7 @@ def get_reservation_by_id(reservation_id):
 
 # --- POST / (Crée une nouvelle réservation) ---
 @reservations_bp.route('', methods=['POST'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def create_reservation():
     data = request.get_json()
     try:
@@ -212,7 +212,7 @@ def create_reservation():
 
 # --- PUT /<id> (Met à jour UNE réservation) ---
 @reservations_bp.route('/<string:reservation_id>', methods=['PUT'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def update_reservation(reservation_id):
     data = request.get_json()
     try:
@@ -319,7 +319,7 @@ def update_reservation(reservation_id):
 
 # --- PUT /<id>/status (Met à jour SEULEMENT le statut) ---
 @reservations_bp.route('/<string:reservation_id>/status', methods=['PUT'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def update_reservation_status(reservation_id):
     data = request.get_json()
     try:
@@ -410,7 +410,7 @@ def update_reservation_status(reservation_id):
 
 # --- DELETE /<id> (Supprime/Annule une réservation) ---
 @reservations_bp.route('/<string:reservation_id>', methods=['DELETE'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def delete_reservation(reservation_id):
     try:
         oid = ObjectId(reservation_id)

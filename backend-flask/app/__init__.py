@@ -39,7 +39,7 @@ def create_app():
 
     # --- Initialisation des Extensions ---
     mongo.init_app(app) 
-    bcrypt.init_app(app) # Initialize bcrypt
+    bcrypt.init_app(app) 
     cors.init_app(app, resources={r"/api/*": {"origins": os.environ.get('CORS_ORIGINS', '*')}}, supports_credentials=True) 
 
     # Créer le dossier d'upload s'il n'existe pas déjà
