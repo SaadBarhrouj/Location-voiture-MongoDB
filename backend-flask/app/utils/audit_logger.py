@@ -19,7 +19,6 @@ def log_action(action, entity_type, entity_id=None, details=None, status='succes
                                        If None, tries to get from session.
     """
     try:
-        # mongo = current_app.extensions['mongo']
         audit_log_collection = mongo.db.audit_log
 
         log_entry = {
@@ -33,9 +32,9 @@ def log_action(action, entity_type, entity_id=None, details=None, status='succes
         if user_id is None and 'user_id' in session:
             try:
                 log_entry['userId'] = ObjectId(session['user_id'])
-            except Exception: # Handle cases where session['user_id'] might not be a valid ObjectId string
+            except Exception: 
                 current_app.logger.warn(f"Could not convert session user_id to ObjectId for audit log: {session['user_id']}")
-                log_entry['userId'] = session['user_id'] # Log as string if conversion fails
+                log_entry['userId'] = session['user_id'] 
         elif user_id:
             log_entry['userId'] = user_id
 

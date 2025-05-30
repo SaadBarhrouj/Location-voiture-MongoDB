@@ -419,7 +419,7 @@ def delete_reservation(reservation_id):
 
         action_details = {'reservationNumber': reservation.get('reservationNumber'), 'carId': str(reservation.get('carId'))}
 
-        if reservation: # This if is redundant but present in read_file output
+        if reservation:
             car_doc = cars_collection().find_one({'_id': reservation.get('carId')})
             if car_doc and car_doc.get('status') not in ['available', 'maintenance']:
                  cars_collection().update_one({'_id': reservation.get('carId')}, {'$set': {'status': 'available', 'updatedAt': datetime.utcnow(), 'updatedBy': modified_by_oid}})
@@ -429,7 +429,7 @@ def delete_reservation(reservation_id):
 
         if result.deleted_count:
             log_action('delete_reservation', 'reservation', entity_id=oid, status='success', details=action_details)
-            return '', 204 # Succès, No Content
+            return '', 204 
         else:
             # This case should be caught by the find_one for reservation above
             return jsonify(message="Reservation not found."), 404
