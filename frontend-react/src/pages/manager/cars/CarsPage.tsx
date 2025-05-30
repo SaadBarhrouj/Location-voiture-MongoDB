@@ -1,14 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Added Select for status filter
 import { API_URL } from "@/lib/api-client";
 import {
   type Car,
   deleteCar,
   getCars,
 } from "@/lib/api/car-service";
-import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Filter, Plus, X } from "lucide-react"; // Added Filter and X icons
+import { useEffect, useMemo, useState } from "react"; // Added useMemo
 import { toast } from "sonner";
 import { CarDetails } from "./CarDetails";
 import { CarForm } from "./CarForm";
@@ -23,6 +37,18 @@ export default function CarsPage() {
   const [currentCar, setCurrentCar] = useState<Car | null>(null);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
 
+  // State for filters
+  const [makeFilter, setMakeFilter] = useState("");
+  const [modelFilter, setModelFilter] = useState("");
+  const [licensePlateFilter, setLicensePlateFilter] = useState("");
+  const [vinFilter, setVinFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Car["status"] | "all">("all"); // 'all' or specific status
+  const [colorFilter, setColorFilter] = useState("");
+  const [isFiltersPopoverOpen, setIsFiltersPopoverOpen] = useState(false);
+
+  const carStatuses: Array<Car["status"] | "all"> = ["all", "available", "rented", "maintenance"];
+
+
   const fetchCars = async () => {
     setIsLoading(true);
     setError(null);
@@ -31,8 +57,9 @@ export default function CarsPage() {
       setCars(data);
     } catch (err) {
       console.error("Error fetching cars:", err);
-      setError("Failed to load cars.");
-      toast.error("Failed to load cars.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load cars.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +68,39 @@ export default function CarsPage() {
   useEffect(() => {
     fetchCars();
   }, []);
+
+  const filteredCars = useMemo(() => {
+    return cars.filter((car) => {
+      const statusMatch = statusFilter === "all" || car.status === statusFilter;
+      return (
+        car.make.toLowerCase().includes(makeFilter.toLowerCase()) &&
+        car.model.toLowerCase().includes(modelFilter.toLowerCase()) &&
+        car.licensePlate.toLowerCase().includes(licensePlateFilter.toLowerCase()) &&
+        car.vin.toLowerCase().includes(vinFilter.toLowerCase()) &&
+        statusMatch &&
+        (car.color || "").toLowerCase().includes(colorFilter.toLowerCase())
+      );
+    });
+  }, [cars, makeFilter, modelFilter, licensePlateFilter, vinFilter, statusFilter, colorFilter]);
+
+  const handleClearFilters = () => {
+    setMakeFilter("");
+    setModelFilter("");
+    setLicensePlateFilter("");
+    setVinFilter("");
+    setStatusFilter("all");
+    setColorFilter("");
+    setIsFiltersPopoverOpen(false); // Optionally close popover on clear
+  };
+
+  const activeFilterCount = [
+    makeFilter,
+    modelFilter,
+    licensePlateFilter,
+    vinFilter,
+    statusFilter !== "all" ? statusFilter : "", // Count status only if not 'all'
+    colorFilter,
+  ].filter(Boolean).length;
 
   const columns = [
     {
@@ -110,6 +170,15 @@ export default function CarsPage() {
       },
     },
     {
+      header: "Status", // Added Status column for visibility
+      accessorKey: "status" as keyof Car,
+      cell: (car: Car) => <span className={`px-2 py-1 text-xs rounded-full ${
+        car.status === "available" ? "bg-green-100 text-green-700" :
+        car.status === "rented" ? "bg-blue-100 text-blue-700" :
+        car.status === "maintenance" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"
+      }`}>{car.status.charAt(0).toUpperCase() + car.status.slice(1)}</span>,
+    },
+    {
       header: "Daily Rate",
       accessorKey: "dailyRate" as keyof Car,
       cell: (car: Car) => {
@@ -144,28 +213,25 @@ export default function CarsPage() {
 
     const originalCars = [...cars];
     setCars(cars.filter((c) => c.id !== currentCar.id));
-    toast.info("Deleting car...");
+    // toast.info("Deleting car..."); // Removed for consistency with client delete
 
     try {
       await deleteCar(currentCar.id);
-      toast.success("Car deleted successfully.");
+      toast.success(`Car '${currentCar.make} ${currentCar.model}' deleted successfully.`);
     } catch (err) {
       console.error("Error deleting car:", err);
-      toast.error("Failed to delete car.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete car.";
+      toast.error(errorMessage);
       setCars(originalCars);
     } finally {
       setCurrentCar(null);
+      setIsDeleteDialogOpen(false); // Close dialog in finally
     }
   };
 
   const handleFormSubmit = (updatedOrNewCar: Car) => {
-    if (formMode === "add") {
-      setCars((prevCars) => [...prevCars, updatedOrNewCar]);
-    } else {
-      setCars((prevCars) =>
-        prevCars.map((c) => (c.id === updatedOrNewCar.id ? updatedOrNewCar : c))
-      );
-    }
+    // Refetch to ensure data consistency, especially for new IDs or if backend modifies data
+    fetchCars();
     setIsFormOpen(false);
   };
 
@@ -174,22 +240,128 @@ export default function CarsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  if (error && !isLoading) {
-    return <div className="p-4 text-red-600">{error}</div>;
+  if (error && !isLoading && cars.length === 0) {
+    return (
+      <div className="p-4 md:p-8 text-center">
+        <p className="text-xl text-red-600 mb-4">{error}</p>
+        <Button onClick={fetchCars}>Try Again</Button>
+      </div>
+    );
   }
 
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Cars</h1>
-        <Button onClick={handleAddCar}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Car
-        </Button>
+        <div className="flex items-center gap-2">
+          <Popover open={isFiltersPopoverOpen} onOpenChange={setIsFiltersPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="relative">
+                <Filter className="mr-2 h-4 w-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Filter Cars</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Apply filters to narrow down the car list.
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="makeFilter" className="text-xs">Make</Label>
+                    <Input
+                      id="makeFilter"
+                      value={makeFilter}
+                      onChange={(e) => setMakeFilter(e.target.value)}
+                      placeholder="Filter by make..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="modelFilter" className="text-xs">Model</Label>
+                    <Input
+                      id="modelFilter"
+                      value={modelFilter}
+                      onChange={(e) => setModelFilter(e.target.value)}
+                      placeholder="Filter by model..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="licensePlateFilter" className="text-xs">License Plate</Label>
+                    <Input
+                      id="licensePlateFilter"
+                      value={licensePlateFilter}
+                      onChange={(e) => setLicensePlateFilter(e.target.value)}
+                      placeholder="Filter by license plate..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="vinFilter" className="text-xs">VIN</Label>
+                    <Input
+                      id="vinFilter"
+                      value={vinFilter}
+                      onChange={(e) => setVinFilter(e.target.value)}
+                      placeholder="Filter by VIN..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="colorFilter" className="text-xs">Color</Label>
+                    <Input
+                      id="colorFilter"
+                      value={colorFilter}
+                      onChange={(e) => setColorFilter(e.target.value)}
+                      placeholder="Filter by color..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="statusFilter" className="text-xs">Status</Label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(value) => setStatusFilter(value as Car["status"] | "all")}
+                    >
+                      <SelectTrigger className="col-span-2 h-8 text-xs">
+                        <SelectValue placeholder="Filter by status..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {carStatuses.map(status => (
+                          <SelectItem key={status} value={status} className="text-xs">
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2 pt-2">
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs">
+                    <X className="mr-1 h-3 w-3" /> Clear
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Button onClick={handleAddCar}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Car
+          </Button>
+        </div>
       </div>
 
       <DataTable
-        data={cars}
+        data={filteredCars} // Use filtered data
         columns={columns}
         onEdit={handleEditCar}
         onDelete={handleDeleteCar}

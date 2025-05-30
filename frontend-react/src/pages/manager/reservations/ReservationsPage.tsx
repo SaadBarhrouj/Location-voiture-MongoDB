@@ -10,15 +10,29 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input"; // Added Input
+import { Label } from "@/components/ui/label"; // Added Label
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"; // Added Popover
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Added Select
 import {
   type Reservation,
   type ReservationStatus,
   deleteReservation,
   getReservations,
 } from "@/lib/api/reservation-service";
-import { format } from "date-fns";
-import { Edit, Edit3, Eye, MoreHorizontal, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { format, isValid, parseISO } from "date-fns"; // Added isValid, parseISO
+import { Edit, Edit3, Eye, Filter, MoreHorizontal, Plus, Trash2, X } from "lucide-react"; // Added Filter, X
+import { useEffect, useMemo, useState } from "react"; // Added useMemo
 import { toast } from "sonner";
 import { ReservationDetails } from "./ReservationDetails";
 import { ReservationForm } from "./ReservationForm";
@@ -43,9 +57,14 @@ export const formatStatus = (status: ReservationStatus): string => {
   return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
+const reservationStatusesList: Array<ReservationStatus | "all"> = [
+  "all", "pending_confirmation", "confirmed", "active", "completed", "cancelled_by_client", "cancelled_by_agency", "no_show"
+];
+
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -53,14 +72,26 @@ export default function ReservationsPage() {
   const [currentReservation, setCurrentReservation] = useState<Reservation | null>(null);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
 
+  // Filter states
+  const [reservationNumberFilter, setReservationNumberFilter] = useState("");
+  const [carFilter, setCarFilter] = useState(""); // Search by make, model, license plate
+  const [clientFilter, setClientFilter] = useState(""); // Search by name
+  const [startDateFilter, setStartDateFilter] = useState(""); // YYYY-MM-DD
+  const [endDateFilter, setEndDateFilter] = useState(""); // YYYY-MM-DD
+  const [statusFilter, setStatusFilter] = useState<ReservationStatus | "all">("all");
+  const [isFiltersPopoverOpen, setIsFiltersPopoverOpen] = useState(false);
+
   const fetchReservations = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await getReservations();
       setReservations(data);
     } catch (err) {
       console.error("Error fetching reservations:", err);
-      toast.error("Failed to fetch reservations.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch reservations.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -73,11 +104,89 @@ export default function ReservationsPage() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
-      return format(new Date(dateString), "PP");
+      return format(parseISO(dateString), "PP"); // Use parseISO for consistency
     } catch {
       return dateString;
     }
   };
+
+  const filteredReservations = useMemo(() => {
+    return reservations.filter((reservation) => {
+      const statusMatch = statusFilter === "all" || reservation.status === statusFilter;
+
+      const carDetails = reservation.carDetails;
+      const carMatch = carFilter === "" || (carDetails &&
+        ( (carDetails.make?.toLowerCase() || "").includes(carFilter.toLowerCase()) ||
+          (carDetails.model?.toLowerCase() || "").includes(carFilter.toLowerCase()) ||
+          (carDetails.licensePlate?.toLowerCase() || "").includes(carFilter.toLowerCase())
+        )
+      );
+
+      const clientDetails = reservation.clientDetails;
+      const clientMatch = clientFilter === "" || (clientDetails &&
+        ( (clientDetails.firstName?.toLowerCase() || "").includes(clientFilter.toLowerCase()) ||
+          (clientDetails.lastName?.toLowerCase() || "").includes(clientFilter.toLowerCase())
+        )
+      );
+      
+      let startDateMatch = true;
+      if (startDateFilter) {
+        try {
+          const filterDate = parseISO(startDateFilter);
+          const reservationStartDate = parseISO(reservation.startDate);
+          if (isValid(filterDate) && isValid(reservationStartDate)) {
+            // Filter for reservations starting on or after the filter date
+            startDateMatch = reservationStartDate >= filterDate;
+          } else {
+            startDateMatch = true; // Or false if strict, depends on desired behavior for invalid input
+          }
+        } catch { startDateMatch = true; } // Ignore invalid date filter
+      }
+
+      let endDateMatch = true;
+      if (endDateFilter) {
+        try {
+          const filterDate = parseISO(endDateFilter);
+          const reservationEndDate = parseISO(reservation.endDate);
+          if (isValid(filterDate) && isValid(reservationEndDate)) {
+            // Filter for reservations ending on or before the filter date
+            endDateMatch = reservationEndDate <= filterDate;
+          } else {
+            endDateMatch = true;
+          }
+        } catch { endDateMatch = true; } // Ignore invalid date filter
+      }
+
+      return (
+        (reservation.reservationNumber?.toLowerCase() || "").includes(reservationNumberFilter.toLowerCase()) &&
+        carMatch &&
+        clientMatch &&
+        statusMatch &&
+        startDateMatch &&
+        endDateMatch
+      );
+    });
+  }, [reservations, reservationNumberFilter, carFilter, clientFilter, statusFilter, startDateFilter, endDateFilter]);
+
+  const handleClearFilters = () => {
+    setReservationNumberFilter("");
+    setCarFilter("");
+    setClientFilter("");
+    setStartDateFilter("");
+    setEndDateFilter("");
+    setStatusFilter("all");
+    setIsFiltersPopoverOpen(false);
+  };
+
+  const activeFilterCount = [
+    reservationNumberFilter,
+    carFilter,
+    clientFilter,
+    startDateFilter,
+    endDateFilter,
+    statusFilter !== "all" ? statusFilter : "",
+  ].filter(Boolean).length;
+
 
   const handleAddReservation = () => {
     setFormMode("add");
@@ -111,7 +220,7 @@ export default function ReservationsPage() {
 
     const originalReservations = [...reservations];
     setReservations(reservations.filter((r) => r.id !== currentReservation.id));
-    toast.info("Deleting reservation...");
+    // toast.info("Deleting reservation..."); // Removed for consistency
 
     try {
       await deleteReservation(currentReservation.id);
@@ -122,17 +231,13 @@ export default function ReservationsPage() {
       setReservations(originalReservations);
     } finally {
       setCurrentReservation(null);
+      setIsDeleteDialogOpen(false); // Close dialog in finally
     }
   };
 
-  const handleFormSubmitSuccess = (updatedReservation: Reservation) => {
-    if (formMode === "add") {
-      setReservations((prev) => [...prev, updatedReservation]);
-    } else {
-      setReservations((prev) =>
-        prev.map((r) => (r.id === updatedReservation.id ? updatedReservation : r))
-      );
-    }
+  const handleFormSubmitSuccess = (updatedOrNewReservation: Reservation) => {
+    // Refetch to ensure data consistency
+    fetchReservations();
     setIsFormOpen(false);
   };
 
@@ -176,74 +281,185 @@ export default function ReservationsPage() {
     {
       header: "N° Res.",
       accessorKey: "reservationNumber" as keyof Reservation,
-      cell: (reservation: Reservation) => (
-        <span className="font-mono text-xs">{reservation.reservationNumber}</span>
+      cell: ({ row }: { row: { original: Reservation }}) => (
+        <span className="font-mono text-xs">{row.original.reservationNumber}</span>
       )
     },
     {
       header: "Car",
       accessorKey: "carDetails" as keyof Reservation,
-      cell: (reservation: Reservation) => {
-        const car = reservation.carDetails;
+      cell: ({ row }: { row: { original: Reservation }}) => {
+        const car = row.original.carDetails;
         return car ? `${car.make} ${car.model} (${car.licensePlate})` : "N/A";
       },
     },
     {
       header: "Client",
       accessorKey: "clientDetails" as keyof Reservation,
-      cell: (reservation: Reservation) => {
-        const client = reservation.clientDetails;
+      cell: ({ row }: { row: { original: Reservation }}) => {
+        const client = row.original.clientDetails;
         return client ? `${client.firstName} ${client.lastName}` : "N/A";
       },
     },
     {
       header: "Dates",
-      cell: (reservation: Reservation) => (
+      cell: ({ row }: { row: { original: Reservation }}) => (
         <div className="text-sm">
-          <div>Start: {formatDate(reservation.startDate)}</div>
-          <div>End: {formatDate(reservation.endDate)}</div>
+          <div>Start: {formatDate(row.original.startDate)}</div>
+          <div>End: {formatDate(row.original.endDate)}</div>
         </div>
       ),
     },
     {
       header: "Est. Cost",
       accessorKey: "estimatedTotalCost" as keyof Reservation,
-      cell: (reservation: Reservation) => `${reservation.estimatedTotalCost.toFixed(2)} MAD`,
+      cell: ({ row }: { row: { original: Reservation }}) => `${row.original.estimatedTotalCost.toFixed(2)} MAD`,
     },
     {
       header: "Status",
       accessorKey: "status" as keyof Reservation,
-      cell: (reservation: Reservation) => (
-        <Badge variant="outline" className={`${getStatusColor(reservation.status)} whitespace-nowrap`}>
-          {formatStatus(reservation.status)}
+      cell: ({ row }: { row: { original: Reservation }}) => (
+        <Badge variant="outline" className={`${getStatusColor(row.original.status)} whitespace-nowrap`}>
+          {formatStatus(row.original.status)}
         </Badge>
       ),
     },
     {
       header: "Reserved On",
       accessorKey: "reservationDate" as keyof Reservation,
-      cell: (reservation: Reservation) => formatDate(reservation.reservationDate),
+      cell: ({ row }: { row: { original: Reservation }}) => formatDate(row.original.reservationDate),
     },
     {
       header: "Actions",
-      cell: (reservation: Reservation) => getRowActions(reservation),
+      cell: ({ row }: { row: { original: Reservation }}) => getRowActions(row.original),
     }
   ];
+  
+  if (error && !isLoading && reservations.length === 0) {
+    return (
+      <div className="p-4 md:p-8 text-center">
+        <p className="text-xl text-red-600 mb-4">{error}</p>
+        <Button onClick={fetchReservations}>Try Again</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Reservations</h1>
-        <Button onClick={handleAddReservation}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Reservation
-        </Button>
+        <div className="flex items-center gap-2">
+          <Popover open={isFiltersPopoverOpen} onOpenChange={setIsFiltersPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="relative">
+                <Filter className="mr-2 h-4 w-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-96" align="end"> {/* Increased width for more filters */}
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Filter Reservations</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Apply filters to narrow down the reservation list.
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="reservationNumberFilter" className="text-xs">Res. Number</Label>
+                    <Input
+                      id="reservationNumberFilter"
+                      value={reservationNumberFilter}
+                      onChange={(e) => setReservationNumberFilter(e.target.value)}
+                      placeholder="Filter by number..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="carFilter" className="text-xs">Car</Label>
+                    <Input
+                      id="carFilter"
+                      value={carFilter}
+                      onChange={(e) => setCarFilter(e.target.value)}
+                      placeholder="Make, model, plate..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="clientFilter" className="text-xs">Client</Label>
+                    <Input
+                      id="clientFilter"
+                      value={clientFilter}
+                      onChange={(e) => setClientFilter(e.target.value)}
+                      placeholder="Name..."
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                   <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="startDateFilter" className="text-xs">Start Date</Label>
+                    <Input
+                      id="startDateFilter"
+                      type="date"
+                      value={startDateFilter}
+                      onChange={(e) => setStartDateFilter(e.target.value)}
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="endDateFilter" className="text-xs">End Date</Label>
+                    <Input
+                      id="endDateFilter"
+                      type="date"
+                      value={endDateFilter}
+                      onChange={(e) => setEndDateFilter(e.target.value)}
+                      className="col-span-2 h-8 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 items-center gap-4">
+                    <Label htmlFor="statusFilter" className="text-xs">Status</Label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(value) => setStatusFilter(value as ReservationStatus | "all")}
+                    >
+                      <SelectTrigger className="col-span-2 h-8 text-xs">
+                        <SelectValue placeholder="Filter by status..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {reservationStatusesList.map(status => (
+                          <SelectItem key={status} value={status} className="text-xs">
+                            {status === "all" ? "All Statuses" : formatStatus(status as ReservationStatus)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2 pt-2">
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs">
+                    <X className="mr-1 h-3 w-3" /> Clear
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Button onClick={handleAddReservation}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Reservation
+          </Button>
+        </div>
       </div>
 
       <DataTable
-        data={reservations}
+        data={filteredReservations} // Use filtered data
         columns={columns}
         isLoading={isLoading}
+        // No searchKey needed here as we are handling filtering outside
       />
 
       <ReservationForm
