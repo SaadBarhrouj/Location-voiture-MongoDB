@@ -104,12 +104,8 @@ export async function deleteReservation(id: string): Promise<void> {
   return apiDelete<void>(`/reservations/${id}`);
 }
 
-export async function updateReservationStatus(
-  id: string,
-  statusData: ReservationStatusUpdateInput
-): Promise<Reservation> {
-  const response = await apiPut<Reservation>(`/reservations/${id}/status`, statusData);
-  return response;
+export async function updateReservationStatus(id: string, statusUpdateData: ReservationStatusUpdateInput): Promise<Reservation> {
+  return apiPut<Reservation>(`/reservations/${id}/status`, statusUpdateData);
 }
 
 // --- MOCK DATA (pour développement) ---
