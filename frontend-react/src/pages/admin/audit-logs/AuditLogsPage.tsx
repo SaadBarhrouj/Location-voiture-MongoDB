@@ -6,50 +6,145 @@ import { getAuditLogs, type ProcessedAuditLog } from "@/lib/api/admin-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter } from "lucide-react";
+import { Terminal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter, Info, Eye } from "lucide-react"; // Added Eye icon
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
-// Define a column type that matches your custom DataTable in `components/ui/data-table.tsx`
+// Define a column type that matches your custom DataTable
 interface CustomColumnDef<TData> {
   header: string;
   accessorKey: keyof TData;
   cell?: (item: TData) => React.ReactNode;
 }
 
+// Helper function to get color based on entity type for Target column
+const getTargetColor = (targetString: string): string => {
+  const entityType = targetString.split(' ')[0]?.toLowerCase();
+  switch (entityType) {
+    case 'manager':
+      return 'bg-blue-100 text-blue-700 border-blue-300';
+    case 'car':
+      return 'bg-indigo-100 text-indigo-700 border-indigo-300';
+    case 'client':
+      return 'bg-purple-100 text-purple-700 border-purple-300';
+    case 'reservation':
+      return 'bg-pink-100 text-pink-700 border-pink-300';
+    case 'user': // For general user actions if any
+      return 'bg-cyan-100 text-cyan-700 border-cyan-300';
+    case 'system_stats':
+      return 'bg-gray-100 text-gray-700 border-gray-300';
+    default:
+      return 'bg-slate-100 text-slate-700 border-slate-300';
+  }
+};
+
+// New component to format and display details within the Popover
+const FormattedDetails: React.FC<{ detailsString: string }> = ({ detailsString }) => {
+  if (detailsString === "No details") {
+    return (
+      <div className="p-4 text-sm text-muted-foreground flex items-center">
+        <Info className="h-4 w-4 mr-2 flex-shrink-0" />
+        No additional details available.
+      </div>
+    );
+  }
+
+  try {
+    const parsedDetails = JSON.parse(detailsString);
+
+    if (typeof parsedDetails === 'object' && parsedDetails !== null) {
+      return (
+        <dl className="p-3 space-y-2 text-xs">
+          {Object.entries(parsedDetails).map(([key, value]) => (
+            <div key={key} className="grid grid-cols-3 gap-x-2 items-start">
+              <dt className="font-semibold col-span-1 truncate text-muted-foreground" title={key}>
+                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
+              </dt>
+              <dd className="col-span-2">
+                {typeof value === 'object' && value !== null ? (
+                  <pre className="text-xs bg-background p-2 rounded-md border text-pretty w-full overflow-x-auto">
+                    {JSON.stringify(value, null, 2)}
+                  </pre>
+                ) : (
+                  <span className="break-words text-foreground">{String(value)}</span>
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      );
+    }
+    return <pre className="p-3 text-xs whitespace-pre-wrap break-all bg-muted rounded-md">{detailsString}</pre>;
+  } catch (error) {
+    return <pre className="p-3 text-xs whitespace-pre-wrap break-all bg-muted rounded-md">{detailsString}</pre>;
+  }
+};
+
+
 const columns: CustomColumnDef<ProcessedAuditLog>[] = [
   {
     accessorKey: "timestamp",
     header: "Timestamp",
-    cell: (item) => <div className="min-w-[160px] text-xs">{item.timestamp}</div>,
+    cell: (item) => (
+      <div className="min-w-[160px] text-xs text-muted-foreground font-mono">
+        {item.timestamp.split(' ')[0]} <span className="text-foreground/80">{item.timestamp.split(' ')[1]}</span>
+      </div>
+    ),
   },
   {
     accessorKey: "user",
     header: "User",
-    cell: (item) => <div className="min-w-[120px] text-xs">{item.user}</div>,
+    cell: (item) => (
+      <div className={`min-w-[120px] text-xs font-medium ${item.user.toLowerCase() === "system" ? "text-sky-600 dark:text-sky-400" : ""}`}>
+        {item.user}
+      </div>
+    ),
   },
   {
     accessorKey: "action",
     header: "Action",
-    cell: (item) => <div className="min-w-[180px] text-xs font-medium">{item.action}</div>,
+    cell: (item) => <div className="min-w-[180px] text-xs font-semibold text-primary/90">{item.action.replace(/_/g, ' ')}</div>,
   },
   {
     accessorKey: "target",
     header: "Target",
-    cell: (item) => <div className="min-w-[200px] text-xs">{item.target}</div>,
+    cell: (item) => {
+      const targetText = item.target === "N/A" ? "N/A" : item.target;
+      const entityType = item.target.split(' ')[0]?.toLowerCase();
+      const idPart = item.target.includes('(') ? item.target.substring(item.target.indexOf('(')) : '';
+
+      return (
+        <div className="min-w-[200px] text-xs flex items-center">
+          {targetText !== "N/A" ? (
+            <Badge variant="outline" className={`text-xs px-2 py-0.5 mr-1.5 border ${getTargetColor(item.target)}`}>
+              {entityType}
+            </Badge>
+          ) : null}
+          {/* Corrected span content: only show idPart if it exists, otherwise show N/A if targetText is N/A */}
+          <span className="truncate">
+            {targetText !== "N/A" ? idPart : "N/A"}
+          </span>
+        </div>
+      );
+    }
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: (item) => {
       const status = item.status;
-      let statusClass = "text-gray-600";
-      if (status?.toLowerCase() === "success") statusClass = "text-green-600";
-      else if (status?.toLowerCase() === "failure") statusClass = "text-red-600";
-      else if (status?.toLowerCase() === "info") statusClass = "text-blue-600";
-      else if (status?.toLowerCase() === "warning") statusClass = "text-yellow-600";
-      return <div className={`min-w-[80px] text-xs font-semibold ${statusClass}`}>{status}</div>;
+      let statusClass = "bg-gray-100 text-gray-800 border-gray-300"; // Default
+      if (status?.toLowerCase() === "success") statusClass = "bg-green-100 text-green-800 border-green-300";
+      else if (status?.toLowerCase() === "failure") statusClass = "bg-red-100 text-red-800 border-red-300";
+      else if (status?.toLowerCase() === "info") statusClass = "bg-blue-100 text-blue-800 border-blue-300";
+      else if (status?.toLowerCase() === "warning") statusClass = "bg-yellow-100 text-yellow-800 border-yellow-300";
+      return (
+        <Badge variant="outline" className={`text-xs px-2 py-0.5 border ${statusClass}`}>
+          {status}
+        </Badge>
+      );
     },
   },
   {
@@ -58,12 +153,17 @@ const columns: CustomColumnDef<ProcessedAuditLog>[] = [
     cell: (item) => (
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="text-xs h-7">View</Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs h-7 px-2.5 text-primary/80 hover:bg-primary/10 hover:text-primary"
+          >
+            <Eye className="h-3.5 w-3.5 mr-1.5" />
+            View
+          </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 max-h-60 overflow-y-auto p-0">
-          <pre className="p-3 text-xs whitespace-pre-wrap break-all bg-muted rounded-md">
-            {item.details}
-          </pre>
+        <PopoverContent className="min-w-[24rem] max-w-md max-h-96 overflow-y-auto p-0 border shadow-lg">
+          <FormattedDetails detailsString={item.details} />
         </PopoverContent>
       </Popover>
     ),
