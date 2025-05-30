@@ -1,13 +1,12 @@
-# app/routes/reservations.py
 from flask import Blueprint, request, jsonify, current_app, session
 from bson import ObjectId
 from datetime import datetime
-import uuid # For reservationNumber
+import uuid 
 
 # Importer mongo et les helpers
 from ..extensions import mongo
 from ..utils.helpers import mongo_to_dict, bson_to_json, login_required
-from ..utils.audit_logger import log_action # Import log_action
+from ..utils.audit_logger import log_action 
 
 # Créer le Blueprint
 reservations_bp = Blueprint('reservations', __name__)
@@ -16,7 +15,7 @@ reservations_bp = Blueprint('reservations', __name__)
 reservations_collection = lambda: mongo.db.reservations
 cars_collection = lambda: mongo.db.cars
 clients_collection = lambda: mongo.db.clients
-users_collection = lambda: mongo.db.users # Ajout pour createdBy/lastModifiedBy details
+users_collection = lambda: mongo.db.users 
 
 # Helper temporaire simple pour user_id
 def _get_user_id():
@@ -97,11 +96,9 @@ def get_reservations():
             details = _get_reservation_details(res)
             if details:
                 reservations_list.append(details)
-        # log_action('list_reservations', 'reservation', status='success') # Optional
         return bson_to_json(reservations_list), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching reservations: {e}")
-        log_action('list_reservations', 'reservation', status='failure', details={'error': str(e)})
         return jsonify(message="Error fetching reservations."), 500
 
 # --- GET /<id> (Récupère UNE réservation) ---
@@ -111,21 +108,17 @@ def get_reservation_by_id(reservation_id):
     try:
         oid = ObjectId(reservation_id)
     except Exception:
-        log_action('get_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': 'Invalid reservation ID format'})
         return jsonify(message="Invalid reservation ID format."), 400
 
     try:
         reservation_doc = reservations_collection().find_one({'_id': oid})
         if reservation_doc:
             details = _get_reservation_details(reservation_doc)
-            # log_action('get_reservation', 'reservation', entity_id=oid, status='success') # Optional
             return bson_to_json(details), 200
         else:
-            log_action('get_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found'})
             return jsonify(message="Reservation not found."), 404
     except Exception as e:
         current_app.logger.error(f"Error fetching reservation {reservation_id}: {e}")
-        log_action('get_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': str(e)})
         return jsonify(message="Error fetching reservation."), 500
 
 # --- POST / (Crée une nouvelle réservation) ---
@@ -137,13 +130,12 @@ def create_reservation():
         required_fields = ['carId', 'clientId', 'startDate', 'endDate']
         if not data or not all(field in data for field in required_fields):
             missing = [field for field in required_fields if field not in data]
-            log_action('create_reservation', 'reservation', status='failure', details={'error': 'Missing required fields', 'missing': missing, 'provided_data': data})
             return jsonify(message=f"Missing required fields: {', '.join(missing)}"), 400
 
         # Validation des dates
         is_valid, date_error = _validate_reservation_dates(data['startDate'], data['endDate'])
         if not is_valid:
-            log_action('create_reservation', 'reservation', status='failure', details={'error': date_error, 'startDate': data['startDate'], 'endDate': data['endDate']})
+            # log_action('create_reservation', 'reservation', status='failure', details={'error': date_error, 'startDate': data['startDate'], 'endDate': data['endDate']})
             return jsonify(message=date_error), 400
 
         car_oid = ObjectId(data['carId'])
@@ -153,21 +145,18 @@ def create_reservation():
         car = cars_collection().find_one({'_id': car_oid})
         client = clients_collection().find_one({'_id': client_oid})
         if not car: 
-            log_action('create_reservation', 'reservation', status='failure', details={'error': 'Car not found', 'carId': data['carId']})
             return jsonify(message="Car not found."), 404
         if not client: 
-            log_action('create_reservation', 'reservation', status='failure', details={'error': 'Client not found', 'clientId': data['clientId']})
             return jsonify(message="Client not found."), 404
 
         # Basic car availability check (can be expanded)
-        if car.get('status') != 'available':
-            log_action('create_reservation', 'reservation', status='failure', details={'error': 'Car not available', 'carId': data['carId'], 'car_status': car.get('status')})
-            return jsonify(message=f"Car '{car.get('make')} {car.get('model')}' is not available."), 409
+        #if car.get('status') != 'available':
+            # log_action('create_reservation', 'reservation', status='failure', details={'error': 'Car not available', 'carId': data['carId'], 'car_status': car.get('status')})
+            #return jsonify(message=f"Car '{car.get('make')} {car.get('model')}' is not available."), 409
 
         # Calcul automatique du coût estimé
         estimated_cost, cost_error = _calculate_estimated_cost(car, data['startDate'], data['endDate'])
         if estimated_cost is None:
-            log_action('create_reservation', 'reservation', status='failure', details={'error': cost_error, 'carId': data['carId']})
             return jsonify(message=cost_error), 400
 
         # Permettre de surcharger le coût estimé si fourni (pour des cas spéciaux)
@@ -192,7 +181,7 @@ def create_reservation():
             "actualReturnDate": None,
             "status": data.get('status', 'pending_confirmation'), # Statut par défaut
             "estimatedTotalCost": estimated_cost,
-            "finalTotalCost": None, # Sera défini à la fin
+            "finalTotalCost": None, 
             "notes": data.get('notes', ''),
             "reservationDate": datetime.utcnow(),
             "createdBy": created_by_oid,
@@ -201,7 +190,7 @@ def create_reservation():
             "paymentDetails": {
                 "amountPaid": amount_paid,
                 "remainingBalance": estimated_cost - amount_paid,
-                "transactionDate": data.get('paymentDetails', {}).get('transactionDate') # Peut être None
+                "transactionDate": data.get('paymentDetails', {}).get('transactionDate') 
             }
         }
 
@@ -213,15 +202,12 @@ def create_reservation():
              details = _get_reservation_details(created_res_doc) # Récupérer détails pour réponse
              return bson_to_json(details), 201 # 201 Created
         else:
-             log_action('create_reservation', 'reservation', status='failure', details={'error': 'Failed to insert reservation into DB', 'carId': data['carId']})
              return jsonify(message="Failed to create reservation."), 500
 
     except (ValueError, TypeError) as ve:
-        log_action('create_reservation', 'reservation', status='failure', details={'error': 'Invalid data type or format', 'message': str(ve), 'provided_data': data})
         return jsonify(message=f"Invalid data type or format: {str(ve)}."), 400
     except Exception as e:
         current_app.logger.error(f"Error creating reservation: {e}")
-        log_action('create_reservation', 'reservation', status='failure', details={'error': str(e), 'provided_data': data})
         return jsonify(message="Error creating reservation."), 500
 
 # --- PUT /<id> (Met à jour UNE réservation) ---
@@ -233,17 +219,14 @@ def update_reservation(reservation_id):
         oid = ObjectId(reservation_id)
         modified_by_oid = _get_user_id()
     except Exception:
-        log_action('update_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': 'Invalid reservation/user ID format'})
         return jsonify(message="Invalid reservation ID or user_id format."), 400
 
     try:
         if not data: 
-            log_action('update_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'No update data provided'})
             return jsonify(message="No update data provided."), 400
 
         existing_reservation = reservations_collection().find_one({'_id': oid})
         if not existing_reservation:
-            log_action('update_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found'})
             return jsonify(message="Reservation not found."), 404
 
         # Validation des dates si modifiées
@@ -253,7 +236,6 @@ def update_reservation(reservation_id):
         if 'startDate' in data or 'endDate' in data:
             is_valid, date_error = _validate_reservation_dates(start_date, end_date)
             if not is_valid:
-                log_action('update_reservation', 'reservation', entity_id=oid, status='failure', details={'error': date_error, 'startDate': start_date, 'endDate': end_date})
                 return jsonify(message=date_error), 400
 
         update_fields = {}
@@ -288,7 +270,6 @@ def update_reservation(reservation_id):
                 if estimated_cost is not None:
                     update_fields['estimatedTotalCost'] = estimated_cost
                 else:
-                    log_action('update_reservation', 'reservation', entity_id=oid, status='failure', details={'error': cost_error})
                     return jsonify(message=cost_error), 400
         
         # Gestion spécifique de paymentDetails
@@ -314,7 +295,6 @@ def update_reservation(reservation_id):
              update_fields['paymentDetails'] = new_payment_details
 
         if not update_fields: 
-            log_action('update_reservation', 'reservation', entity_id=oid, status='info', details={'message': 'No valid or changed fields provided for update', 'provided_data': data})
             return jsonify(message="No valid fields provided for update."), 400
 
         # Mettre à jour les timestamps de modification
@@ -329,15 +309,12 @@ def update_reservation(reservation_id):
             details = _get_reservation_details(updated_res_doc)
             return bson_to_json(details), 200
         else:
-            log_action('update_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found during update attempt'}) # Should be caught earlier
             return jsonify(message="Reservation not found during update."), 404
 
     except (ValueError, TypeError) as ve:
-         log_action('update_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': 'Invalid data type or format', 'message': str(ve), 'provided_data': data})
          return jsonify(message=f"Invalid data type or format: {str(ve)}."), 400
     except Exception as e:
         current_app.logger.error(f"Error updating reservation {reservation_id}: {e}")
-        log_action('update_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': str(e), 'provided_data': data})
         return jsonify(message="Error updating reservation."), 500
 
 # --- PUT /<id>/status (Met à jour SEULEMENT le statut) ---
@@ -349,19 +326,16 @@ def update_reservation_status(reservation_id):
         oid = ObjectId(reservation_id)
         modified_by_oid = _get_user_id()
     except Exception:
-        log_action('update_reservation_status', 'reservation', entity_id=reservation_id, status='failure', details={'error': 'Invalid reservation/user ID format'})
         return jsonify(message="Invalid reservation ID or user_id format."), 400
 
     try:
         new_status = data.get('status')
         valid_statuses = ["pending_confirmation", "confirmed", "active", "completed", "cancelled_by_client", "cancelled_by_agency", "no_show"]
         if not new_status or new_status not in valid_statuses:
-            log_action('update_reservation_status', 'reservation', entity_id=oid, status='failure', details={'error': 'Invalid status value', 'provided_status': new_status})
             return jsonify(message=f"Invalid status value. Must be one of: {', '.join(valid_statuses)}"), 400
 
         reservation = reservations_collection().find_one({'_id': oid})
         if not reservation:
-            log_action('update_reservation_status', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found'})
             return jsonify(message="Reservation not found."), 404
 
         update_data = {
@@ -408,15 +382,12 @@ def update_reservation_status(reservation_id):
             details = _get_reservation_details(updated_res_doc)
             return bson_to_json(details), 200
         else:
-            log_action('update_reservation_status', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found during status update'})
             return jsonify(message="Reservation not found."), 404
 
     except (ValueError, TypeError) as ve:
-        log_action('update_reservation_status', 'reservation', entity_id=reservation_id, status='failure', details={'error': 'Invalid data type or format', 'message': str(ve), 'provided_data': data})
         return jsonify(message=f"Invalid data type or format for status update: {str(ve)}."),400
     except Exception as e:
         current_app.logger.error(f"Error updating reservation status {reservation_id}: {e}")
-        log_action('update_reservation_status', 'reservation', entity_id=reservation_id, status='failure', details={'error': str(e), 'provided_data': data})
         return jsonify(message="Error updating reservation status."), 500
 
 # --- DELETE /<id> (Supprime/Annule une réservation) ---
@@ -427,18 +398,16 @@ def delete_reservation(reservation_id):
         oid = ObjectId(reservation_id)
         modified_by_oid = _get_user_id()
     except Exception:
-        log_action('delete_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': 'Invalid reservation/user ID format'})
         return jsonify(message="Invalid reservation ID or user_id format."), 400
 
     try:
-        reservation = reservations_collection().find_one({'_id': oid})
+        reservation = reservations_collection().find_one({'_id': oid}) # Based on read_file output
         if not reservation:
-            log_action('delete_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found'})
             return jsonify(message="Reservation not found."), 404
 
         action_details = {'reservationNumber': reservation.get('reservationNumber'), 'carId': str(reservation.get('carId'))}
 
-        if reservation:
+        if reservation: # This if is redundant but present in read_file output
             car_doc = cars_collection().find_one({'_id': reservation.get('carId')})
             if car_doc and car_doc.get('status') not in ['available', 'maintenance']:
                  cars_collection().update_one({'_id': reservation.get('carId')}, {'$set': {'status': 'available', 'updatedAt': datetime.utcnow(), 'updatedBy': modified_by_oid}})
@@ -451,9 +420,8 @@ def delete_reservation(reservation_id):
             return '', 204 # Succès, No Content
         else:
             # This case should be caught by the find_one for reservation above
-            log_action('delete_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found during delete operation'})
+            # log_action('delete_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found during delete operation'})
             return jsonify(message="Reservation not found."), 404
     except Exception as e:
         current_app.logger.error(f"Error deleting reservation {reservation_id}: {e}")
-        log_action('delete_reservation', 'reservation', entity_id=reservation_id, status='failure', details={'error': str(e)})
         return jsonify(message="Error deleting reservation."), 500

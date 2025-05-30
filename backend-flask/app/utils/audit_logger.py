@@ -46,7 +46,7 @@ def log_action(action, entity_type, entity_id=None, details=None, status='succes
         
         # If user info is still not available (e.g., system action before login)
         if 'userId' not in log_entry and 'userUsername' not in log_entry:
-            log_entry['userUsername'] = 'system' # Default to system if no user context
+            log_entry['userUsername'] = 'system' 
 
         if entity_id:
             log_entry['entityId'] = entity_id
