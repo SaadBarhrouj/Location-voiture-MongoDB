@@ -13,36 +13,52 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useAuth } from "../../hooks/useAuth";
-import { simulateLogin } from "../../lib/api/auth-service";
+import { login as apiLogin, type LoginResponse } from "../../lib/api/auth-service";
 
 export function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginContext, user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
-      const response = await simulateLogin({ username, password });
-      login(response.user);
-      if (response.user.role === "admin") {
-        navigate("/admin/dashboard", { replace: true });
+      const response: LoginResponse = await apiLogin({ username, password });
+
+      if (response.user) {
+        if (response.user.isActive === false) {
+          const deactivationMessage = "Account is deactivated. Please contact administrator.";
+          setError(deactivationMessage);
+          toast.error(deactivationMessage);
+        } else {
+          loginContext(response.user);
+          toast.success("Login successful!");
+        }
       } else {
-        navigate("/manager/dashboard", { replace: true });
+        const genericError = "Login failed. Please try again.";
+        setError(genericError);
+        toast.error(genericError);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login error");
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message || err.message || "Login error. Please check your credentials.";
+      setError(backendMessage);
+      toast.error(backendMessage);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  if (user && !isSubmitting) {
+    return null;
+  }
 
   return (
     <Card className="w-full bg-card text-card-foreground shadow-lg">
@@ -73,7 +89,7 @@ export function LoginForm() {
               }
               required
               placeholder="Enter your username"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -90,7 +106,7 @@ export function LoginForm() {
               }
               required
               placeholder="Enter your password"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -99,9 +115,9 @@ export function LoginForm() {
           <Button 
             type="submit" 
             className="w-full h-10 font-medium" 
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>
         </CardFooter>
       </form>

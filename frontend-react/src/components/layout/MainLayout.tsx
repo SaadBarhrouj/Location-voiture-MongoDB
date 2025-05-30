@@ -2,17 +2,17 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 // Remove lucide-react imports
 // import { CalendarClock, Car, Home, LogOut, Menu, UserCog, X } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faHome,
-  faUserCog,
-  faCar,
+  faBars,
   faCalendarCheck,
+  faCar,
+  faHistory,
+  faHome,
   faSignOutAlt,
   faTimes,
-  faBars,
-  faHistory,
+  faUserCog,
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -32,7 +32,7 @@ const navItems = {
 };
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logoutContext } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -79,9 +79,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <Button
             variant="ghost"
             className="w-full justify-start text-destructive hover:bg-primary/10 hover:text-destructive"
-            onClick={logout}
+            onClick={logoutContext}
           >
-            {/* Replace LogOut icon */}
             <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 h-5 w-5" />
             Logout
           </Button>

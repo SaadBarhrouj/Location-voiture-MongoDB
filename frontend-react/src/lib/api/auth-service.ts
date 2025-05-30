@@ -1,53 +1,46 @@
-import { apiPost } from "../api-client"
+import { apiGet, apiPost } from "../api-client";
 
 export interface LoginCredentials {
-  username: string
-  password: string
+  username: string;
+  password: string;
+}
+
+// L'interface User correspond à la structure de l'utilisateur retournée par le backend
+export interface User {
+  id: string;
+  username: string;
+  role: "admin" | "manager";
+  fullName: string;
+  isActive?: boolean; // Le backend retourne isActive
 }
 
 export interface LoginResponse {
-  user: {
-    id: string
-    username: string
-    role: "admin" | "manager"
-    fullName: string
-  }
-  token?: string // If using JWT
+  user: User;
+}
+
+export interface AuthStatusResponse {
+  user: User | null;
 }
 
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
-  return apiPost<LoginResponse>("/auth/login", credentials)
+  return apiPost<LoginResponse>("/auth/login", credentials);
 }
 
 export async function logout(): Promise<void> {
-  return apiPost<void>("/auth/logout", {})
+  try {
+    await apiPost<void>("/auth/logout", {});
+  } catch (error) {
+    console.warn("Backend logout failed, proceeding with frontend logout:", error);
+    throw error;
+  }
 }
 
-// For demo purposes, we'll simulate the API calls
-export async function simulateLogin(credentials: LoginCredentials): Promise<LoginResponse> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
-
-  // Mock authentication logic
-  if (credentials.username === "admin" && credentials.password === "admin123") {
-    return {
-      user: {
-        id: "admin-id",
-        username: "admin",
-        role: "admin",
-        fullName: "System Administrator",
-      },
-    }
-  } else if (credentials.username === "manager" && credentials.password === "manager123") {
-    return {
-      user: {
-        id: "manager-id",
-        username: "manager",
-        role: "manager",
-        fullName: "Car Manager",
-      },
-    }
+export async function checkAuthStatus(): Promise<AuthStatusResponse> {
+  try {
+    const response = await apiGet<AuthStatusResponse>("/auth/status");
+    return response;
+  } catch (error) {
+    console.error("Error checking auth status:", error);
+    return { user: null };
   }
-
-  throw new Error("Invalid username or password")
 }
