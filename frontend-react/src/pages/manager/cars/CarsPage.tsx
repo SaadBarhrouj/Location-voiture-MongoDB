@@ -94,6 +94,22 @@ export default function CarsPage() {
     setIsFiltersPopoverOpen(false); // Optionally close popover on clear
   };
 
+  const getStatusColor = (status: Car["status"]): string => {
+    switch (status) {
+      case "available": return "bg-green-100 text-green-800 border-green-300";
+      case "rented": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "maintenance": return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "out_of_service": return "bg-red-100 text-red-800 border-red-300";
+      default: return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+
+  const formatCarStatus = (status: Car["status"]): string => {
+    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+
+
   const activeFilterCount = [
     makeFilter,
     modelFilter,
@@ -175,15 +191,7 @@ export default function CarsPage() {
         );
       },
     },
-    {
-      header: "Status", // Added Status column for visibility
-      accessorKey: "status" as keyof Car,
-      cell: (car: Car) => <span className={`px-2 py-1 text-xs rounded-full ${
-        car.status === "available" ? "bg-green-100 text-green-700" :
-        car.status === "rented" ? "bg-blue-100 text-blue-700" :
-        car.status === "maintenance" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"
-      }`}>{car.status.charAt(0).toUpperCase() + car.status.slice(1)}</span>,
-    },
+    
     {
       header: "Daily Rate",
       accessorKey: "dailyRate" as keyof Car,
@@ -272,7 +280,7 @@ export default function CarsPage() {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
+            <PopoverContent className="w-96" align="end">
               <div className="grid gap-4">
                 <div className="space-y-2">
                   <h4 className="font-medium leading-none">Filter Cars</h4>
@@ -288,7 +296,7 @@ export default function CarsPage() {
                       value={makeFilter}
                       onChange={(e) => setMakeFilter(e.target.value)}
                       placeholder="Filter by make..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -298,7 +306,7 @@ export default function CarsPage() {
                       value={modelFilter}
                       onChange={(e) => setModelFilter(e.target.value)}
                       placeholder="Filter by model..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -308,7 +316,7 @@ export default function CarsPage() {
                       value={licensePlateFilter}
                       onChange={(e) => setLicensePlateFilter(e.target.value)}
                       placeholder="Filter by license plate..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -318,7 +326,7 @@ export default function CarsPage() {
                       value={vinFilter}
                       onChange={(e) => setVinFilter(e.target.value)}
                       placeholder="Filter by VIN..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
                   </div>
                   <div className="grid grid-cols-3 items-center gap-4">
@@ -328,26 +336,8 @@ export default function CarsPage() {
                       value={colorFilter}
                       onChange={(e) => setColorFilter(e.target.value)}
                       placeholder="Filter by color..."
-                      className="col-span-2 h-8 text-xs"
+                      className="col-span-2 h-8 text-xs placeholder:opacity-70"
                     />
-                  </div>
-                  <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor="statusFilter" className="text-xs">Status</Label>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(value) => setStatusFilter(value as Car["status"] | "all")}
-                    >
-                      <SelectTrigger className="col-span-2 h-8 text-xs">
-                        <SelectValue placeholder="Filter by status..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {carStatuses.map(status => (
-                          <SelectItem key={status} value={status} className="text-xs">
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2 pt-2">
