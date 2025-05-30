@@ -26,7 +26,7 @@ def login_required(role=None):
 audit_log_bp = Blueprint('audit_log', __name__, url_prefix='/api/audit-logs')
 
 @audit_log_bp.route('/', methods=['GET'])
-# @login_required(role="admin")
+@login_required(role="admin")
 def get_audit_logs():
     try:
         page = int(request.args.get('page', 1))

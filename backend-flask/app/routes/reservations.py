@@ -86,7 +86,7 @@ def _get_reservation_details(res_doc):
 
 # --- GET / (Liste toutes les réservations) ---
 @reservations_bp.route('', methods=['GET'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def get_reservations():
     try:
         reservations_list = []
@@ -103,7 +103,7 @@ def get_reservations():
 
 # --- GET /<id> (Récupère UNE réservation) ---
 @reservations_bp.route('/<string:reservation_id>', methods=['GET'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def get_reservation_by_id(reservation_id):
     try:
         oid = ObjectId(reservation_id)
@@ -123,7 +123,7 @@ def get_reservation_by_id(reservation_id):
 
 # --- POST / (Crée une nouvelle réservation) ---
 @reservations_bp.route('', methods=['POST'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def create_reservation():
     data = request.get_json()
     try:
@@ -135,7 +135,6 @@ def create_reservation():
         # Validation des dates
         is_valid, date_error = _validate_reservation_dates(data['startDate'], data['endDate'])
         if not is_valid:
-            # log_action('create_reservation', 'reservation', status='failure', details={'error': date_error, 'startDate': data['startDate'], 'endDate': data['endDate']})
             return jsonify(message=date_error), 400
 
         car_oid = ObjectId(data['carId'])
@@ -148,11 +147,6 @@ def create_reservation():
             return jsonify(message="Car not found."), 404
         if not client: 
             return jsonify(message="Client not found."), 404
-
-        # Basic car availability check (can be expanded)
-        #if car.get('status') != 'available':
-            # log_action('create_reservation', 'reservation', status='failure', details={'error': 'Car not available', 'carId': data['carId'], 'car_status': car.get('status')})
-            #return jsonify(message=f"Car '{car.get('make')} {car.get('model')}' is not available."), 409
 
         # Calcul automatique du coût estimé
         estimated_cost, cost_error = _calculate_estimated_cost(car, data['startDate'], data['endDate'])
@@ -175,11 +169,11 @@ def create_reservation():
             "reservationNumber": reservation_number,
             "carId": car_oid,
             "clientId": client_oid,
-            "startDate": data['startDate'], # S'assurer que c'est un format de date valide (ISO)
-            "endDate": data['endDate'],     # S'assurer que c'est un format de date valide (ISO)
+            "startDate": data['startDate'],
+            "endDate": data['endDate'],
             "actualPickupDate": None,
             "actualReturnDate": None,
-            "status": data.get('status', 'pending_confirmation'), # Statut par défaut
+            "status": data.get('status', 'pending_confirmation'),
             "estimatedTotalCost": estimated_cost,
             "finalTotalCost": None, 
             "notes": data.get('notes', ''),
@@ -199,8 +193,8 @@ def create_reservation():
         if result.inserted_id:
              log_action('create_reservation', 'reservation', entity_id=result.inserted_id, status='success', details={'reservationNumber': reservation_number, 'carId': str(car_oid), 'clientId': str(client_oid)})
              created_res_doc = reservations_collection().find_one({'_id': result.inserted_id})
-             details = _get_reservation_details(created_res_doc) # Récupérer détails pour réponse
-             return bson_to_json(details), 201 # 201 Created
+             details = _get_reservation_details(created_res_doc) 
+             return bson_to_json(details), 201 
         else:
              return jsonify(message="Failed to create reservation."), 500
 
@@ -212,7 +206,7 @@ def create_reservation():
 
 # --- PUT /<id> (Met à jour UNE réservation) ---
 @reservations_bp.route('/<string:reservation_id>', methods=['PUT'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def update_reservation(reservation_id):
     data = request.get_json()
     try:
@@ -274,7 +268,7 @@ def update_reservation(reservation_id):
         
         # Gestion spécifique de paymentDetails
         current_payment_details = existing_reservation.get('paymentDetails', {})
-        new_payment_details = current_payment_details.copy() # Commencer avec les valeurs existantes
+        new_payment_details = current_payment_details.copy()
 
         payment_changed = False
         if 'amountPaid' in payment_details_update:
@@ -291,7 +285,7 @@ def update_reservation(reservation_id):
         if payment_changed or 'estimatedTotalCost' in update_fields:
             new_payment_details['remainingBalance'] = current_estimated_cost - new_payment_details.get('amountPaid', 0.0)
             update_fields['paymentDetails'] = new_payment_details
-        elif payment_changed: # Si seul transactionDate a changé mais pas amountPaid
+        elif payment_changed: 
              update_fields['paymentDetails'] = new_payment_details
 
         if not update_fields: 
@@ -319,7 +313,7 @@ def update_reservation(reservation_id):
 
 # --- PUT /<id>/status (Met à jour SEULEMENT le statut) ---
 @reservations_bp.route('/<string:reservation_id>/status', methods=['PUT'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def update_reservation_status(reservation_id):
     data = request.get_json()
     try:
@@ -410,7 +404,7 @@ def update_reservation_status(reservation_id):
 
 # --- DELETE /<id> (Supprime/Annule une réservation) ---
 @reservations_bp.route('/<string:reservation_id>', methods=['DELETE'])
-#@login_required(role="manager") 
+@login_required(role="manager") 
 def delete_reservation(reservation_id):
     try:
         oid = ObjectId(reservation_id)
@@ -419,13 +413,13 @@ def delete_reservation(reservation_id):
         return jsonify(message="Invalid reservation ID or user_id format."), 400
 
     try:
-        reservation = reservations_collection().find_one({'_id': oid}) # Based on read_file output
+        reservation = reservations_collection().find_one({'_id': oid}) 
         if not reservation:
             return jsonify(message="Reservation not found."), 404
 
         action_details = {'reservationNumber': reservation.get('reservationNumber'), 'carId': str(reservation.get('carId'))}
 
-        if reservation: # This if is redundant but present in read_file output
+        if reservation:
             car_doc = cars_collection().find_one({'_id': reservation.get('carId')})
             if car_doc and car_doc.get('status') not in ['available', 'maintenance']:
                  cars_collection().update_one({'_id': reservation.get('carId')}, {'$set': {'status': 'available', 'updatedAt': datetime.utcnow(), 'updatedBy': modified_by_oid}})
@@ -435,10 +429,9 @@ def delete_reservation(reservation_id):
 
         if result.deleted_count:
             log_action('delete_reservation', 'reservation', entity_id=oid, status='success', details=action_details)
-            return '', 204 # Succès, No Content
+            return '', 204 
         else:
             # This case should be caught by the find_one for reservation above
-            # log_action('delete_reservation', 'reservation', entity_id=oid, status='failure', details={'error': 'Reservation not found during delete operation'})
             return jsonify(message="Reservation not found."), 404
     except Exception as e:
         current_app.logger.error(f"Error deleting reservation {reservation_id}: {e}")

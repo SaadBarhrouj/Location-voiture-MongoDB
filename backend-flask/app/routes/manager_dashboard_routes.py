@@ -1,14 +1,14 @@
 from flask import Blueprint, jsonify, current_app, request
 from bson import ObjectId
 from app.extensions import mongo
-from ..utils.helpers import login_required # Changed from app.utils.auth_utils import token_required
-from ..utils.audit_logger import log_action # Assuming this is the correct path for log_action
+from ..utils.helpers import login_required 
+from ..utils.audit_logger import log_action 
 from datetime import datetime, timedelta
 
 manager_dashboard_bp = Blueprint('manager_dashboard_bp', __name__, url_prefix='/api/manager/dashboard')
 
 @manager_dashboard_bp.route('/stats', methods=['GET'])
-# @login_required(role="manager") # Changed from @token_required
+@login_required(role="manager")
 def get_manager_dashboard_stats():
     try:
         cars_collection = mongo.db.cars
@@ -67,17 +67,15 @@ def get_manager_dashboard_stats():
             "pendingReservations": pending_reservations,
             "monthlyRevenue": monthly_revenue,
         }
-        # log_action('get_manager_dashboard_stats', 'dashboard_stats', status='success', user_id=getattr(g, 'user_id', 'system'))
         return jsonify(stats), 200
 
     except Exception as e:
         current_app.logger.error(f"Error fetching manager dashboard stats: {e}")
-        # log_action('get_manager_dashboard_stats', 'dashboard_stats', status='failure', details={'error': str(e)}, user_id=getattr(g, 'user_id', 'system'))
         return jsonify(message=f"Error fetching manager dashboard stats: {str(e)}"), 500
 
 
 @manager_dashboard_bp.route('/recent-clients', methods=['GET'])
-# @login_required(role="manager") # Changed from @token_required
+@login_required(role="manager")
 def get_recent_clients():
     try:
         limit = int(request.args.get('limit', 3))
@@ -93,16 +91,14 @@ def get_recent_clients():
                 "email": client.get("email"),
                 "registeredAt": client.get("createdAt") 
             })
-        # log_action('get_recent_clients', 'client', status='success', user_id=getattr(g, 'user_id', 'system'))
         return jsonify(clients_list), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching recent clients: {e}")
-        # log_action('get_recent_clients', 'client', status='failure', details={'error': str(e)}, user_id=getattr(g, 'user_id', 'system'))
         return jsonify(message=f"Error fetching recent clients: {str(e)}"), 500
 
 
 @manager_dashboard_bp.route('/recent-reservations', methods=['GET'])
-# @login_required(role="manager") # Changed from @token_required
+@login_required(role="manager") 
 def get_recent_reservations():
     try:
         limit = int(request.args.get('limit', 3))
@@ -135,9 +131,7 @@ def get_recent_reservations():
                 "startDate": res.get("startDate"), 
                 "status": res.get("status")
             })
-        # log_action('get_recent_reservations', 'reservation', status='success', user_id=getattr(g, 'user_id', 'system'))
         return jsonify(reservations_list), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching recent reservations: {e}")
-        # log_action('get_recent_reservations', 'reservation', status='failure', details={'error': str(e)}, user_id=getattr(g, 'user_id', 'system'))
         return jsonify(message=f"Error fetching recent reservations: {str(e)}"), 500

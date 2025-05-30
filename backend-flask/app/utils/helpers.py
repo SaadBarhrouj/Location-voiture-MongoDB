@@ -23,7 +23,6 @@ def custom_serializer(obj):
 def bson_to_json(data):
     return json.loads(json.dumps(data, default=custom_serializer))
 
-# --- AJOUTER CES FONCTIONS SI ELLES MANQUENT ---
 
 # --- Fonctions pour les mots de passe ---
 def hash_password(password):
