@@ -43,6 +43,22 @@ export const formatStatus = (status: ReservationStatus): string => {
   return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
+// Helper pour les couleurs de statut de voiture
+export const getCarStatusColor = (status?: string): string => {
+  switch (status) {
+    case "available": return "bg-green-100 text-green-800 border-green-300";
+    case "rented": return "bg-blue-100 text-blue-800 border-blue-300";
+    case "maintenance": return "bg-yellow-100 text-yellow-800 border-yellow-300";
+    case "out_of_service": return "bg-red-100 text-red-800 border-red-300";
+    default: return "bg-gray-100 text-gray-800 border-gray-300";
+  }
+};
+
+export const formatCarStatus = (status?: string): string => {
+  if (!status) return "Unknown";
+  return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
+
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,7 +201,17 @@ export default function ReservationsPage() {
       accessorKey: "carDetails" as keyof Reservation,
       cell: (reservation: Reservation) => {
         const car = reservation.carDetails;
-        return car ? `${car.make} ${car.model} (${car.licensePlate})` : "N/A";
+        return car ? (
+          <div className="space-y-1">
+            <div className="font-medium">{car.make} {car.model}</div>
+            <div className="text-xs text-muted-foreground">({car.licensePlate})</div>
+            {car.status && (
+              <Badge variant="outline" className={`${getCarStatusColor(car.status)} text-xs`}>
+                {formatCarStatus(car.status)}
+              </Badge>
+            )}
+          </div>
+        ) : "N/A";
       },
     },
     {

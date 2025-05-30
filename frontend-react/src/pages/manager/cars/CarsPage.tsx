@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
@@ -42,6 +43,20 @@ export default function CarsPage() {
     fetchCars();
   }, []);
 
+  const getStatusColor = (status: Car["status"]): string => {
+    switch (status) {
+      case "available": return "bg-green-100 text-green-800 border-green-300";
+      case "rented": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "maintenance": return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "out_of_service": return "bg-red-100 text-red-800 border-red-300";
+      default: return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+
+  const formatCarStatus = (status: Car["status"]): string => {
+    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const columns = [
     {
       header: "Image",
@@ -75,8 +90,13 @@ export default function CarsPage() {
       accessorKey: "licensePlate" as keyof Car,
     },
     {
-      header: "VIN",
-      accessorKey: "vin" as keyof Car,
+      header: "Status",
+      accessorKey: "status" as keyof Car,
+      cell: (car: Car) => (
+        <Badge variant="outline" className={`${getStatusColor(car.status)} whitespace-nowrap`}>
+          {formatCarStatus(car.status)}
+        </Badge>
+      ),
     },
     {
       header: "Color",

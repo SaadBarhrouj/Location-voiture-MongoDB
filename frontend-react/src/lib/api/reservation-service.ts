@@ -7,6 +7,7 @@ export interface CarDetailsForReservation {
   licensePlate: string;
   imageUrl?: string;
   vin?: string;
+  status?: "available" | "rented" | "maintenance" | "out_of_service";
 }
 
 export interface ClientDetailsForReservation {
@@ -106,58 +107,4 @@ export async function deleteReservation(id: string): Promise<void> {
 
 export async function updateReservationStatus(id: string, statusUpdateData: ReservationStatusUpdateInput): Promise<Reservation> {
   return apiPut<Reservation>(`/reservations/${id}/status`, statusUpdateData);
-}
-
-// --- MOCK DATA (pour développement) ---
-const mockReservations: Reservation[] = [
-  {
-    id: "1",
-    reservationNumber: "RES001",
-    carId: "1",
-    carDetails: {
-      make: "Toyota",
-      model: "Corolla",
-      licensePlate: "123456-ا-01",
-      imageUrl: "/static/uploads/cars/toyota-corolla.jpg",
-      vin: "1234567890"
-    },
-    clientId: "1",
-    clientDetails: {
-      firstName: "Ahmed",
-      lastName: "Bennani",
-      email: "ahmed@email.com",
-      phone: "+212661234567"
-    },
-    startDate: "2024-02-01",
-    endDate: "2024-02-05",
-    status: "confirmed",
-    estimatedTotalCost: 1000,
-    notes: "Client préfère récupérer le matin",
-    reservationDate: "2024-01-25T10:30:00Z",
-    paymentDetails: {
-      amountPaid: 300,
-      remainingBalance: 700,
-      transactionDate: "2024-01-25"
-    },
-    lastModifiedAt: "2024-01-25T10:30:00Z"
-  }
-];
-
-export async function simulateGetReservations(): Promise<Reservation[]> {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return [...mockReservations];
-}
-
-export async function simulateCreateReservation(reservationData: ReservationCreateInput): Promise<Reservation> {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  const newReservation: Reservation = {
-    id: Date.now().toString(),
-    reservationNumber: `RES${String(Date.now()).slice(-6)}`,
-    ...reservationData,
-    reservationDate: new Date().toISOString(),
-    lastModifiedAt: new Date().toISOString(),
-    status: reservationData.status || "pending_confirmation"
-  };
-  mockReservations.push(newReservation);
-  return { ...newReservation };
 }

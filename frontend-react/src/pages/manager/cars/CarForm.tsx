@@ -292,6 +292,7 @@ export function CarForm({
                   <SelectItem value="available">Available</SelectItem>
                   <SelectItem value="rented">Rented</SelectItem>
                   <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="out_of_service">Out of Service</SelectItem>
                 </SelectContent>
               </Select>
             </div>

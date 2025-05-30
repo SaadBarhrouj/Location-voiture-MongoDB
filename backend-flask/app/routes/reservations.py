@@ -66,7 +66,7 @@ def _get_reservation_details(res_doc):
     res_dict = mongo_to_dict(res_doc)
     
     # Détails de la voiture
-    car_doc = cars_collection().find_one({'_id': res_doc.get('carId')}, {'make': 1, 'model': 1, 'licensePlate': 1, 'imageUrl': 1, 'vin': 1})
+    car_doc = cars_collection().find_one({'_id': res_doc.get('carId')}, {'make': 1, 'model': 1, 'licensePlate': 1, 'imageUrl': 1, 'vin': 1, 'status': 1})
     res_dict['carDetails'] = mongo_to_dict(car_doc) if car_doc else None
     
     # Détails du client
